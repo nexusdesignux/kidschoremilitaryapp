@@ -1,0 +1,379 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;500;600;700;900&family=Teko:wght@300;400;500;600;700&family=Bungee&family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Saira+Condensed:wght@300;400;500;600;700;800;900&family=Courier+Prime:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-military-camo-light/10;
+  }
+
+  body {
+    @apply bg-military-navy-500 text-gray-100 font-body antialiased;
+    @apply bg-tactical-grid;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-tactical uppercase tracking-wider;
+  }
+}
+
+@layer components {
+  /* Military Button Styles */
+  .btn-military {
+    @apply px-6 py-3 font-tactical text-lg uppercase tracking-widest;
+    @apply bg-military-green-500 text-white border-3 border-military-green-bright;
+    @apply shadow-tactical hover:shadow-hud;
+    @apply transition-all duration-200;
+    @apply relative overflow-hidden;
+    @apply hover:bg-military-green-600 hover:scale-105;
+    @apply active:scale-95;
+  }
+
+  .btn-military::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent;
+    @apply translate-x-[-200%] transition-transform duration-500;
+  }
+
+  .btn-military:hover::before {
+    @apply translate-x-[200%];
+  }
+
+  .btn-commander {
+    @apply btn-military bg-military-gold-500 border-military-gold-bright;
+    @apply shadow-mission hover:shadow-mission;
+  }
+
+  .btn-alert {
+    @apply btn-military bg-military-red-500 border-red-400;
+    @apply shadow-alert hover:shadow-alert;
+  }
+
+  .btn-tactical {
+    @apply btn-military bg-military-blue-500 border-blue-400;
+    @apply shadow-rank hover:shadow-rank;
+  }
+
+  /* Military Card Styles */
+  .card-military {
+    @apply bg-military-navy-600 border-3 border-military-green-500/30;
+    @apply shadow-tactical backdrop-blur-sm;
+    @apply rounded-none relative overflow-hidden;
+  }
+
+  .card-military::before {
+    content: '';
+    @apply absolute top-0 left-0 w-full h-1 bg-hazard-stripes opacity-50;
+  }
+
+  .card-mission {
+    @apply card-military border-military-gold-500/50;
+    @apply shadow-mission;
+  }
+
+  .card-mission::before {
+    @apply bg-rank-gradient;
+  }
+
+  /* HUD Elements */
+  .hud-panel {
+    @apply bg-military-navy-700/90 backdrop-blur-md;
+    @apply border-2 border-military-green-500/40;
+    @apply shadow-hud;
+    position: relative;
+  }
+
+  .hud-panel::after {
+    content: '';
+    @apply absolute inset-0 bg-tactical-grid opacity-30 pointer-events-none;
+  }
+
+  /* Tactical Text */
+  .text-mission {
+    @apply text-mission font-tactical text-military-gold-500 uppercase;
+    @apply drop-shadow-[0_0_10px_rgba(255,193,7,0.5)];
+    text-shadow: 0 0 20px rgba(255, 193, 7, 0.8),
+                 0 0 30px rgba(255, 193, 7, 0.6),
+                 2px 2px 4px rgba(0, 0, 0, 0.8);
+  }
+
+  .text-rank {
+    @apply text-rank font-stencil text-military-blue-500 uppercase;
+    text-shadow: 0 0 10px rgba(74, 144, 226, 0.6),
+                 1px 1px 2px rgba(0, 0, 0, 0.8);
+  }
+
+  .text-tactical {
+    @apply text-tactical font-military text-military-green-bright uppercase;
+    text-shadow: 0 0 8px rgba(82, 181, 86, 0.5),
+                 1px 1px 2px rgba(0, 0, 0, 0.6);
+  }
+
+  .text-alert {
+    @apply font-tactical text-military-red-500 uppercase tracking-widest;
+    @apply animate-blink;
+    text-shadow: 0 0 10px rgba(255, 82, 82, 0.8);
+  }
+
+  /* Badge Styles */
+  .badge-military {
+    @apply inline-flex items-center px-3 py-1 font-stencil text-xs uppercase;
+    @apply bg-military-navy-700 border-2 border-military-green-500;
+    @apply text-military-green-bright;
+    @apply shadow-tactical;
+  }
+
+  .badge-rank {
+    @apply badge-military border-military-gold-500 text-military-gold-bright;
+    @apply shadow-mission;
+  }
+
+  .badge-alert {
+    @apply badge-military border-military-red-500 text-military-red-500;
+    @apply animate-pulse-slow;
+  }
+
+  /* Progress Bars */
+  .progress-military {
+    @apply w-full h-4 bg-military-navy-800 border-2 border-military-green-500/30;
+    @apply relative overflow-hidden;
+  }
+
+  .progress-military-bar {
+    @apply h-full bg-military-green-500 relative;
+    @apply transition-all duration-500;
+    background: linear-gradient(90deg,
+      #3d8b40 0%,
+      #52b556 50%,
+      #3d8b40 100%);
+    background-size: 200% 100%;
+    animation: progressShine 2s linear infinite;
+  }
+
+  @keyframes progressShine {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .progress-military-bar::before {
+    content: '';
+    @apply absolute inset-0 bg-hazard-stripes opacity-20;
+  }
+
+  /* Input Styles */
+  .input-military {
+    @apply w-full px-4 py-3 font-mono text-sm;
+    @apply bg-military-navy-800 text-military-green-bright;
+    @apply border-2 border-military-green-500/30;
+    @apply focus:border-military-green-500 focus:outline-none focus:shadow-hud;
+    @apply transition-all duration-200;
+  }
+
+  .input-military::placeholder {
+    @apply text-military-camo-medium uppercase text-xs tracking-wider;
+  }
+
+  /* Mission Status Indicators */
+  .status-ready {
+    @apply inline-flex items-center gap-2 font-stencil text-xs uppercase;
+    @apply text-military-green-bright;
+  }
+
+  .status-ready::before {
+    content: '●';
+    @apply text-military-green-500 animate-pulse-slow text-lg;
+  }
+
+  .status-in-progress {
+    @apply inline-flex items-center gap-2 font-stencil text-xs uppercase;
+    @apply text-military-blue-500;
+  }
+
+  .status-in-progress::before {
+    content: '◉';
+    @apply text-military-blue-500 animate-ping-slow text-lg;
+  }
+
+  .status-completed {
+    @apply inline-flex items-center gap-2 font-stencil text-xs uppercase;
+    @apply text-military-gold-500;
+  }
+
+  .status-completed::before {
+    content: '✓';
+    @apply text-military-gold-bright font-bold text-lg;
+  }
+
+  .status-critical {
+    @apply inline-flex items-center gap-2 font-stencil text-xs uppercase;
+    @apply text-military-red-500;
+  }
+
+  .status-critical::before {
+    content: '⚠';
+    @apply text-military-red-500 animate-blink text-lg;
+  }
+
+  /* Radar/Scanner Effect */
+  .radar-scanner {
+    @apply relative;
+    animation: radar 4s linear infinite;
+  }
+
+  .radar-scanner::before {
+    content: '';
+    @apply absolute inset-0 bg-military-green-500/10;
+    @apply rounded-full;
+    animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  /* Classified Header */
+  .classified-header {
+    @apply relative py-2 px-4 bg-military-navy-900;
+    @apply border-y-3 border-military-gold-500;
+    background: repeating-linear-gradient(
+      45deg,
+      #1a2332,
+      #1a2332 10px,
+      #1a3b59 10px,
+      #1a3b59 20px
+    );
+  }
+
+  .classified-header::before,
+  .classified-header::after {
+    content: 'CLASSIFIED';
+    @apply absolute font-tactical text-xs text-military-gold-500/30 tracking-widest;
+  }
+
+  .classified-header::before {
+    top: 0.5rem;
+    left: 1rem;
+  }
+
+  .classified-header::after {
+    bottom: 0.5rem;
+    right: 1rem;
+  }
+
+  /* Corner Brackets (HUD Style) */
+  .corner-brackets {
+    @apply relative;
+  }
+
+  .corner-brackets::before,
+  .corner-brackets::after {
+    content: '';
+    @apply absolute w-4 h-4 border-military-green-500;
+  }
+
+  .corner-brackets::before {
+    @apply top-0 left-0 border-t-3 border-l-3;
+  }
+
+  .corner-brackets::after {
+    @apply bottom-0 right-0 border-b-3 border-r-3;
+  }
+
+  /* Scanline Effect */
+  .scanlines {
+    @apply relative;
+  }
+
+  .scanlines::before {
+    content: '';
+    @apply absolute inset-0 pointer-events-none z-10;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.15),
+      rgba(0, 0, 0, 0.15) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    animation: scanline 8s linear infinite;
+  }
+
+  @keyframes scanline {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(100%); }
+  }
+
+  /* Loading Spinner - Military Style */
+  .spinner-military {
+    @apply w-12 h-12 border-4 border-military-green-500/20;
+    @apply border-t-military-green-500 rounded-full;
+    @apply animate-radar;
+  }
+
+  /* Glitch Effect */
+  .glitch {
+    @apply relative;
+    animation: glitch 3s infinite;
+  }
+
+  @keyframes glitch {
+    0%, 90%, 100% {
+      transform: translate(0);
+      opacity: 1;
+    }
+    92% {
+      transform: translate(-2px, 2px);
+      opacity: 0.8;
+    }
+    94% {
+      transform: translate(2px, -2px);
+      opacity: 0.9;
+    }
+    96% {
+      transform: translate(-2px, -2px);
+      opacity: 0.8;
+    }
+  }
+}
+
+@layer utilities {
+  .text-glow-green {
+    text-shadow: 0 0 10px rgba(82, 181, 86, 0.8),
+                 0 0 20px rgba(82, 181, 86, 0.5);
+  }
+
+  .text-glow-gold {
+    text-shadow: 0 0 10px rgba(255, 235, 59, 0.8),
+                 0 0 20px rgba(255, 235, 59, 0.5);
+  }
+
+  .text-glow-blue {
+    text-shadow: 0 0 10px rgba(74, 144, 226, 0.8),
+                 0 0 20px rgba(74, 144, 226, 0.5);
+  }
+
+  .border-glow-green {
+    box-shadow: 0 0 10px rgba(82, 181, 86, 0.5),
+                inset 0 0 10px rgba(82, 181, 86, 0.1);
+  }
+
+  .camo-bg {
+    @apply bg-camo-pattern;
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-military-navy-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-military-green-500 border-2 border-military-navy-800;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-military-green-bright;
+}
