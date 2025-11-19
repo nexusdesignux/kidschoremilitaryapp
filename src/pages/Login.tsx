@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Card } from '../components/ui/Card'
+import { DEMO_ACCOUNTS } from '../utils/mockData'
 
 export const Login: FC = () => {
   const navigate = useNavigate()
@@ -15,6 +16,7 @@ export const Login: FC = () => {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showDemoAccounts, setShowDemoAccounts] = useState(true)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,6 +46,49 @@ export const Login: FC = () => {
             SECURE LOGIN
           </p>
         </div>
+
+        {/* Demo Accounts Banner */}
+        {showDemoAccounts && (
+          <Card className="mb-6 bg-tactical bg-opacity-10 border-tactical-light">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <h3 className="text-lg font-header text-gold uppercase mb-3">
+                  🎮 DEMO MODE AVAILABLE
+                </h3>
+                <p className="text-sm text-gray-300 mb-4">
+                  Try the app without setting up Supabase! Use these test accounts:
+                </p>
+                <div className="space-y-2">
+                  {DEMO_ACCOUNTS.map((account) => (
+                    <div
+                      key={account.email}
+                      className="bg-navy-dark rounded p-3 cursor-pointer hover:bg-navy transition-colors"
+                      onClick={() => setFormData({ email: account.email, password: account.password })}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-bold text-white">{account.name}</div>
+                          <div className="text-xs text-gray-400">
+                            {account.email} / {account.password}
+                          </div>
+                        </div>
+                        <div className="text-xs text-tactical-light uppercase font-bold">
+                          Click to fill
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDemoAccounts(false)}
+                className="text-gray-400 hover:text-white text-2xl ml-4"
+              >
+                ×
+              </button>
+            </div>
+          </Card>
+        )}
 
         <Card>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -79,6 +124,16 @@ export const Login: FC = () => {
             >
               {loading ? 'AUTHENTICATING...' : 'ACCESS COMMAND CENTER'}
             </Button>
+
+            {!showDemoAccounts && (
+              <button
+                type="button"
+                onClick={() => setShowDemoAccounts(true)}
+                className="w-full text-center text-tactical-light hover:text-tactical text-sm uppercase tracking-wide"
+              >
+                Show Demo Accounts
+              </button>
+            )}
           </form>
 
           <div className="mt-6 text-center">

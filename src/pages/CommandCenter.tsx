@@ -5,6 +5,7 @@ import { MissionList } from '../components/missions/MissionList'
 import { StatsWidget } from '../components/dashboard/StatsWidget'
 import { RankBadge } from '../components/agents/RankBadge'
 import { supabase } from '../lib/supabase'
+import { DEMO_MISSIONS } from '../utils/mockData'
 
 interface Mission {
   id: string
@@ -19,7 +20,7 @@ interface Mission {
 }
 
 export const CommandCenter: FC = () => {
-  const { user, family } = useAuthStore()
+  const { user, family, demoMode } = useAuthStore()
   const [missions, setMissions] = useState<Mission[]>([])
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
@@ -39,6 +40,37 @@ export const CommandCenter: FC = () => {
     try {
       setLoading(true)
 
+      // Use demo data in demo mode
+      if (demoMode) {
+        let filteredMissions = DEMO_MISSIONS
+
+        // Agents only see their own missions or unassigned missions
+        if (user?.role === 'agent') {
+          filteredMissions = DEMO_MISSIONS.filter(
+            m => m.assigned_to === user.id || m.assigned_to === null
+          )
+        }
+
+        setMissions(filteredMissions as any)
+
+        // Calculate stats from demo data
+        setStats({
+          totalMissions: filteredMissions.length,
+          completedToday: filteredMissions.filter(
+            m => m.status === 'completed' &&
+            new Date(m.completed_at || '').toDateString() === new Date().toDateString()
+          ).length,
+          streak: 3,
+          pendingMissions: filteredMissions.filter(
+            m => m.status === 'pending' || m.status === 'in_progress'
+          ).length,
+        })
+
+        setLoading(false)
+        return
+      }
+
+      // Real Supabase query
       let query = supabase
         .from('missions')
         .select('*')

@@ -1,5 +1,7 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { supabase } from '../lib/supabase'
+import { DEMO_USERS, DEMO_FAMILIES, DEMO_ACCOUNTS } from '../utils/mockData'
 
 interface User {
   id: string
@@ -23,59 +25,93 @@ interface AuthState {
   user: User | null
   family: Family | null
   loading: boolean
+  demoMode: boolean
   setUser: (user: User | null) => void
   setFamily: (family: Family | null) => void
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   enlist: (email: string, password: string, familyName: string, commanderName: string) => Promise<void>
   checkAuth: () => Promise<void>
+  enableDemoMode: () => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  family: null,
-  loading: true,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      family: null,
+      loading: true,
+      demoMode: false,
 
-  setUser: (user) => set({ user }),
-  setFamily: (family) => set({ family }),
+      setUser: (user) => set({ user }),
+      setFamily: (family) => set({ family }),
 
-  login: async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+      enableDemoMode: () => set({ demoMode: true }),
 
-    if (error) throw error
+      login: async (email: string, password: string) => {
+        const state = get()
 
-    if (data.user) {
-      // Fetch user profile
-      const { data: profile } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', data.user.id)
-        .single()
+        // Demo mode login
+        if (state.demoMode || email.includes('@demo.com')) {
+          const demoAccount = DEMO_ACCOUNTS.find(acc => acc.email === email && acc.password === password)
 
-      if (profile) {
-        set({ user: profile as User })
+          if (!demoAccount) {
+            throw new Error('Invalid demo credentials')
+          }
 
-        // Fetch family
-        const { data: family } = await supabase
-          .from('families')
-          .select('*')
-          .eq('id', profile.family_id)
-          .single()
+          const user = DEMO_USERS[demoAccount.userId as keyof typeof DEMO_USERS]
+          const family = DEMO_FAMILIES[user.family_id as keyof typeof DEMO_FAMILIES]
 
-        if (family) {
-          set({ family: family as Family })
+          set({
+            user: user as User,
+            family: family as Family,
+            demoMode: true,
+          })
+          return
         }
-      }
-    }
-  },
 
-  logout: async () => {
-    await supabase.auth.signOut()
-    set({ user: null, family: null })
-  },
+        // Real Supabase login
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+
+        if (error) throw error
+
+        if (data.user) {
+          // Fetch user profile
+          const { data: profile } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', data.user.id)
+            .single()
+
+          if (profile) {
+            set({ user: profile as User })
+
+            // Fetch family
+            const { data: family } = await supabase
+              .from('families')
+              .select('*')
+              .eq('id', profile.family_id)
+              .single()
+
+            if (family) {
+              set({ family: family as Family })
+            }
+          }
+        }
+      },
+
+      logout: async () => {
+        const state = get()
+
+        if (!state.demoMode) {
+          await supabase.auth.signOut()
+        }
+
+        set({ user: null, family: null, demoMode: false })
+      },
 
   enlist: async (email: string, password: string, familyName: string, commanderName: string) => {
     // Create auth user
@@ -124,34 +160,52 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   checkAuth: async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
+        const state = get()
 
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-
-        if (profile) {
-          set({ user: profile as User })
-
-          const { data: family } = await supabase
-            .from('families')
-            .select('*')
-            .eq('id', profile.family_id)
-            .single()
-
-          if (family) {
-            set({ family: family as Family })
+        try {
+          // Skip Supabase check in demo mode
+          if (state.demoMode && state.user) {
+            set({ loading: false })
+            return
           }
+
+          const { data: { session } } = await supabase.auth.getSession()
+
+          if (session?.user) {
+            const { data: profile } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', session.user.id)
+              .single()
+
+            if (profile) {
+              set({ user: profile as User })
+
+              const { data: family } = await supabase
+                .from('families')
+                .select('*')
+                .eq('id', profile.family_id)
+                .single()
+
+              if (family) {
+                set({ family: family as Family })
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Auth check error:', error)
+        } finally {
+          set({ loading: false })
         }
-      }
-    } catch (error) {
-      console.error('Auth check error:', error)
-    } finally {
-      set({ loading: false })
+      },
+    }),
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({
+        user: state.user,
+        family: state.family,
+        demoMode: state.demoMode,
+      }),
     }
-  },
-}))
+  )
+)
