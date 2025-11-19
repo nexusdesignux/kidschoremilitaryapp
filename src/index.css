@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-navy text-white font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-header tracking-wide;
+  }
+}
+
+@layer components {
+  .mission-card {
+    @apply bg-navy-light border-2 border-tactical rounded-lg p-4 shadow-lg transition-all hover:shadow-xl hover:border-tactical-light;
+  }
+
+  .btn-primary {
+    @apply bg-tactical hover:bg-tactical-light text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 active:scale-95 uppercase tracking-wide;
+  }
+
+  .btn-secondary {
+    @apply bg-navy-light hover:bg-navy text-white font-bold py-3 px-6 rounded-lg border-2 border-tactical transition-all uppercase tracking-wide;
+  }
+
+  .btn-gold {
+    @apply bg-gold hover:bg-gold-light text-navy font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 active:scale-95 uppercase tracking-wide shadow-lg;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wide;
+  }
+
+  .badge-success {
+    @apply badge bg-mission-green text-white;
+  }
+
+  .badge-warning {
+    @apply badge bg-gold text-navy;
+  }
+
+  .badge-danger {
+    @apply badge bg-mission-red text-white;
+  }
+
+  .badge-info {
+    @apply badge bg-mission-blue text-white;
+  }
+
+  .progress-bar {
+    @apply w-full bg-navy-dark rounded-full h-4 overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full bg-gradient-to-r from-tactical to-tactical-light transition-all duration-500 ease-out;
+  }
+}
+
+/* Custom animations */
+@keyframes mission-complete {
+  0% {
+    transform: scale(0.5) rotate(-10deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.animate-mission-complete {
+  animation: mission-complete 0.6s ease-out;
+}
