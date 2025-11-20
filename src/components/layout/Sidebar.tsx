@@ -1,6 +1,7 @@
-import { FC } from 'react'
+import { FC, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
+import { useMissionStore } from '../../store/missionStore'
 
 interface NavItem {
   to: string
@@ -9,9 +10,69 @@ interface NavItem {
 }
 
 export const Sidebar: FC = () => {
-  const { user } = useAuthStore()
+  const { user, family, demoMode } = useAuthStore()
+  const { missions, loadMissions } = useMissionStore()
+
+  useEffect(() => {
+    if (user && family) {
+      loadMissions(user.id, family.id, user.role, demoMode)
+    }
+  }, [user, family, demoMode])
 
   if (!user) return null
+
+  // Calculate active missions
+  const userMissions = user.role === 'agent'
+    ? missions.filter(m => m.assigned_to === user.id || !m.assigned_to)
+    : missions
+
+  const activeMissions = userMissions.filter(
+    m => m.status === 'pending' || m.status === 'in_progress'
+  ).length
+
+  // Calculate streak
+  const calculateStreak = () => {
+    const completedMissions = userMissions.filter(
+      m => m.status === 'completed' || m.status === 'verified'
+    )
+
+    if (completedMissions.length === 0) return 0
+
+    const completedDates = completedMissions
+      .map(m => new Date(m.completed_at || '').toDateString())
+      .filter((date, index, self) => self.indexOf(date) === index)
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+
+    if (completedDates.length === 0) return 0
+
+    let streak = 1
+    const today = new Date()
+
+    const mostRecentDate = new Date(completedDates[0])
+    const daysSinceLastCompletion = Math.floor(
+      (today.getTime() - mostRecentDate.getTime()) / (1000 * 60 * 60 * 24)
+    )
+
+    if (daysSinceLastCompletion > 1) return 0
+
+    for (let i = 1; i < completedDates.length; i++) {
+      const prevDate = new Date(completedDates[i - 1])
+      const currDate = new Date(completedDates[i])
+      const dayDiff = Math.floor(
+        (prevDate.getTime() - currDate.getTime()) / (1000 * 60 * 60 * 24)
+      )
+
+      if (dayDiff === 1) {
+        streak++
+      } else {
+        break
+      }
+    }
+
+    return streak
+  }
+
+  const streak = calculateStreak()
 
   const mainNavItems: NavItem[] = [
     { to: '/command-center', label: 'COMMAND CENTER' },
@@ -87,11 +148,13 @@ export const Sidebar: FC = () => {
         <div className="bg-bg-secondary border border-border-primary p-4 space-y-2">
           <div className="flex justify-between text-xs font-mono">
             <span className="text-text-muted">Active:</span>
-            <span className="text-white font-bold">3</span>
+            <span className="text-white font-bold">{activeMissions}</span>
           </div>
           <div className="flex justify-between text-xs font-mono">
             <span className="text-text-muted">Streak:</span>
-            <span className="text-accent-secondary font-bold">5 DAYS</span>
+            <span className={`font-bold ${streak >= 7 ? 'text-accent-secondary' : streak > 0 ? 'text-accent-primary' : 'text-text-muted'}`}>
+              {streak} {streak === 1 ? 'DAY' : 'DAYS'}
+            </span>
           </div>
           <div className="flex justify-between text-xs font-mono">
             <span className="text-text-muted">Rank:</span>
