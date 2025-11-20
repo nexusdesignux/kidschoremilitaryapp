@@ -32,7 +32,7 @@ export const Layout: FC = () => {
       {/* Globe map line art background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <svg
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] opacity-[0.03]"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] opacity-[0.08]"
           viewBox="0 0 800 800"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
