@@ -33,7 +33,7 @@ Mission Command is a gamified chores app for families that makes household tasks
 
 ### Frontend
 - **React** with Vite
-- **Tailwind CSS** for styling
+- **Tailwind CSS** for styling (with CSS variables for future theming)
 - **React Router** for navigation
 - **Zustand** or **React Context** for state management
 - **date-fns** for date handling
@@ -45,15 +45,46 @@ Mission Command is a gamified chores app for families that makes household tasks
   - Real-time subscriptions
   - Row Level Security (RLS)
   - Auto-generated REST APIs
+  - File storage (mission photos, avatars)
 
-### Payments
-- **Stripe** for subscription billing ($5/month per user)
+### Payments & Rewards
+- **Stripe** for:
+  - Subscription billing ($7-12/month per family)
+  - One-time reward purchases (parent pays for gift cards)
+  - Payment processing
+  - Webhook handling
+- **Tremendous API** for digital gift card delivery
+  - Roblox, Fortnite, Amazon, and 2,000+ brands
+  - Instant digital delivery
+  - Pay-as-you-go pricing
+  - RESTful API integration
+
+### Email Delivery
+- **SendGrid** or **Postmark** for themed reward emails
+  - HTML email templates (military themed)
+  - 99% deliverability
+  - Track opens/clicks
+  - ~$0.001 per email
 
 ### Hosting
 - **Vercel** for frontend deployment
 - **Supabase** for backend (fully managed)
 
 ## Design Aesthetic
+
+### MVP Theme: Military/Tactical Only
+For initial launch, Mission Command will feature the **Military/Tactical theme exclusively**. The app architecture will support future themes, but we're starting with one polished experience.
+
+**Why Military First:**
+- Broadest appeal (boys and girls 8-15)
+- Spy/agent theme is universally cool
+- Professional aesthetic appeals to parents
+- Clear differentiation from competitors
+- Easy to market ("spy chores", "secret agent tasks")
+
+**Future Themes:** Once validated, we'll add Princess/Royal, Space/Sci-Fi, Superhero, Pirate, and Ninja themes (see THEMES_SPEC.md). The codebase is built theme-agnostic from day one using CSS variables.
+
+### Current Theme: Military/Tactical
 
 ### Visual Style
 - **Theme:** Kid-friendly secret agent HQ / spy headquarters
@@ -167,24 +198,68 @@ Think: Spy Kids, Agent Cody Banks, Kim Possible, Club Penguin secret agent missi
 - uploaded_at (timestamp)
 ```
 
-#### `rewards` (Parent-created incentives)
+#### `gift_cards` (Digital reward catalog from Tremendous)
 ```sql
 - id (uuid, primary key)
-- family_id (uuid, foreign key)
-- title (text) - "Ice cream trip", "Extra screen time", etc.
-- cost_in_points (integer) - How many points to redeem
-- created_by (uuid, foreign key to users)
+- tremendous_product_id (text) - Tremendous API product ID
+- brand_name (text) - "Roblox", "Fortnite", "Amazon", etc.
+- display_name (text) - "Roblox Gift Card"
+- description (text)
+- category (enum: gaming/streaming/shopping/entertainment)
+- denominations (array) - [10, 25, 50, 100] available amounts
+- brand_logo_url (text) - Logo image
+- point_cost_per_dollar (integer) - e.g., 20 points = $1
+- parent_cost_markup (decimal) - Your markup percentage (e.g., 0.40 for 40%)
 - is_active (boolean)
+- is_featured (boolean)
+- age_minimum (integer)
+- sort_order (integer)
 - created_at (timestamp)
 ```
 
 #### `reward_redemptions`
 ```sql
 - id (uuid, primary key)
+- user_id (uuid, foreign key) - Which kid redeemed
+- gift_card_id (uuid, foreign key)
+- denomination (integer) - $10, $25, $50, or $100
+- points_spent (integer)
+- parent_cost_usd (decimal) - What parent paid
+- tremendous_cost_usd (decimal) - What you paid Tremendous
+- profit_usd (decimal) - Your profit margin
+- stripe_payment_intent_id (text)
+- tremendous_order_id (text) - Tremendous API order ID
+- tremendous_reward_id (text) - Tremendous API reward ID
+- gift_code (text) - The actual redemption code (encrypted)
+- redemption_url (text) - Where to redeem the code
+- status (enum: pending/processing/delivered/failed)
+- email_sent_at (timestamp)
+- redeemed_at (timestamp)
+- created_at (timestamp)
+```
+
+#### `rewards` (Parent-created family rewards - free)
+```sql
+- id (uuid, primary key)
+- family_id (uuid, foreign key)
+- title (text) - "Ice cream trip", "Extra screen time", etc.
+- description (text)
+- cost_in_points (integer)
+- reward_type (enum: experience/privilege/item)
+- is_active (boolean)
+- created_by (uuid, foreign key to users)
+- created_at (timestamp)
+```
+
+#### `family_reward_redemptions` (Tracking custom family rewards)
+```sql
+- id (uuid, primary key)
 - reward_id (uuid, foreign key)
 - user_id (uuid, foreign key)
-- redeemed_at (timestamp)
 - points_spent (integer)
+- redeemed_at (timestamp)
+- fulfilled_at (timestamp) - When parent marked as given
+- fulfilled_by (uuid, foreign key to users) - Which parent fulfilled it
 ```
 
 ## Key Features
@@ -238,41 +313,94 @@ Think: Spy Kids, Agent Cody Banks, Kim Possible, Club Penguin secret agent missi
      - "Clean Sweep" - Complete all missions in a week
    - Display badges on agent profile
 
-7. **Rewards Store**
-   - Parents create custom rewards (ice cream, extra screen time, toy, etc.)
-   - Set point cost for each reward
-   - Kids browse rewards and redeem points
-   - Parent gets notification when kid redeems
-   - Redemption history tracking
+7. **Digital Rewards Marketplace**
+   - **Two reward types:**
+     - **Family Rewards:** Parents create custom rewards (ice cream, screen time, etc.) - FREE, no cost
+     - **Gift Card Marketplace:** Kids redeem points for real digital gift cards (parent pays)
+   
+   - **Gift Card Marketplace powered by Tremendous API:**
+     - **Gaming:** Roblox, Fortnite V-Bucks, Minecraft, Xbox, PlayStation, Nintendo
+     - **Streaming:** Netflix, Disney+, Spotify, Apple Music
+     - **Shopping:** Amazon, Target, Walmart
+     - **Entertainment:** iTunes, Google Play, Steam
+   
+   - **Redemption Flow:**
+     1. Kid browses marketplace
+     2. Selects gift card (e.g., "$25 Roblox - 500 points + $10")
+     3. Parent gets notification with approve/deny
+     4. Parent approves → Stripe charges parent $10
+     5. System calls Tremendous API to purchase $25 card (costs ~$26)
+     6. **Themed military email sent instantly** with gift code
+     7. Kid receives code in 2-5 minutes
+   
+   - **Point + Cash Hybrid Pricing:**
+     - Kid must earn points threshold (proves they did work)
+     - Parent pays discounted cash amount
+     - Example: $25 card = 500 points + $10 cash (parent saves $15)
+   
+   - **Family Rewards (Custom):**
+     - Parents create unlimited free rewards
+     - "Ice cream trip" (100 points)
+     - "Extra 30 min screen time" (50 points)
+     - "Choose dinner" (150 points)
+     - Pure points cost, no money
 
-8. **Recurring Missions**
+8. **Themed Reward Emails**
+   - Military-themed HTML emails delivered instantly
+   - Includes: Agent name, rank, mission stats, gift code, redemption instructions
+   - Feels like receiving classified intel
+   - "MISSION ACCOMPLISHED" celebration
+   - Next missions preview to keep engagement high
+
+9. **Recurring Missions**
    - Daily missions auto-create (make bed, brush teeth)
    - Weekly missions (clean room every Saturday)
    - Smart scheduling that doesn't overwhelm kids
 
-### Phase 2: Premium Features & Payments
+### Phase 2: Premium Features & Integrations
 
 9. **Stripe Integration**
-   - $5/month per family (unlimited agents)
-   - 14-day free trial
-   - Checkout on enlistment
-   - Webhook handling for subscription events
-   - Grace period for failed payments
+   - Family subscription: $7-12/month (tiered pricing)
+   - Gift card purchases (one-time payments when kid redeems)
+   - Checkout on enlistment (subscription)
+   - Checkout for reward approvals (parent pays for gift cards)
+   - Webhook handling for subscription and payment events
+   - Grace period for failed subscription payments
 
-10. **Advanced Features (Premium)**
+10. **Tremendous API Integration**
+    - Connect to Tremendous API for digital gift card fulfillment
+    - Sync available products and denominations
+    - Process orders in real-time
+    - Handle order status updates
+    - Encrypt and store gift codes securely
+    - Error handling and retry logic
+
+11. **SendGrid Email System**
+    - Themed military email templates
+    - Triggered on gift card delivery
+    - Personalized with kid's name, rank, stats
+    - Beautiful HTML with fallback to plain text
+    - Track email opens and clicks
+    - Resend functionality if email fails
+
+12. **Advanced Features (Premium Tier)**
     - Mission templates (pre-made chores library)
     - Custom badge creator
-    - Family stats and insights
-    - Allowance tracking and payment schedules
+    - Family stats and analytics
     - Mission photos and verification
     - Multiple commanders (both parents)
     - Export chore completion reports
+    - Wishlist feature (save favorite gift cards)
+    - Gift card balance tracking
 
-11. **Notifications**
+13. **Notifications**
     - Push notifications for mission assignments
     - Reminders as due dates approach
     - Celebration notifications when kids complete missions
     - Parent alerts when missions need verification
+    - **Redemption approval notifications:** "Agent Tommy wants to redeem 500 points for a $25 Roblox card ($10 to approve)"
+    - **Instant reward notifications:** "Your gift code has been delivered! Check your email"
+    - Point milestone notifications: "50 more points until you can get that Fortnite card!"
 
 ## User Roles & Permissions
 
@@ -388,10 +516,24 @@ src/
 │   │   ├── BadgeCard.jsx          # Individual badge
 │   │   └── LevelUpAnimation.jsx   # Rank progression celebration
 │   ├── rewards/
-│   │   ├── RewardStore.jsx        # Browse available rewards
-│   │   ├── RewardCard.jsx         # Individual reward
-│   │   ├── RewardForm.jsx         # Parent creates rewards
-│   │   └── RedemptionHistory.jsx  # Past redemptions
+│   │   ├── RewardStore.jsx        # Browse family rewards + gift cards
+│   │   ├── GiftCardGrid.jsx       # Display available gift cards
+│   │   ├── GiftCardCard.jsx       # Individual gift card display
+│   │   ├── FamilyRewardCard.jsx   # Parent-created reward display
+│   │   ├── RewardForm.jsx         # Parent creates family rewards
+│   │   ├── PurchaseModal.jsx      # Parent approval + Stripe payment
+│   │   ├── RedemptionSuccess.jsx  # Confirmation screen with email preview
+│   │   ├── Wishlist.jsx           # Kid's saved gift cards
+│   │   └── RedemptionHistory.jsx  # Past redemptions (both types)
+│   ├── giftcards/
+│   │   ├── CategoryFilter.jsx     # Filter: Gaming, Streaming, Shopping
+│   │   ├── DenominationPicker.jsx # Choose $10, $25, $50, $100
+│   │   ├── FeaturedCards.jsx      # Spotlight popular cards
+│   │   └── CardDetail.jsx         # Full gift card page with details
+│   ├── emails/
+│   │   ├── MilitaryRewardEmail.jsx    # Email template component
+│   │   ├── EmailPreview.jsx       # Preview before sending
+│   │   └── ResendEmail.jsx        # Resend failed emails
 │   └── dashboard/
 │       ├── ParentDashboard.jsx    # Commander view
 │       ├── KidDashboard.jsx       # Agent view
@@ -403,12 +545,18 @@ src/
 │   ├── CommandCenter.jsx          # Main dashboard (role-based)
 │   ├── MissionBriefing.jsx        # Mission detail page
 │   ├── AgentProfile.jsx           # Kid's profile and stats
-│   ├── RewardsPage.jsx            # Rewards store
+│   ├── RewardsMarketplace.jsx     # Family rewards + Gift cards
+│   ├── GiftCardDetail.jsx         # Individual gift card page
+│   ├── PurchaseApproval.jsx       # Parent approval flow
+│   ├── RedemptionHistory.jsx      # Order history
+│   ├── WishlistPage.jsx           # Saved gift cards
 │   ├── FamilySettings.jsx         # Parent settings
 │   └── BillingPage.jsx            # Subscription management
 ├── lib/
 │   ├── supabase.js                # Supabase client
 │   ├── stripe.js                  # Stripe utilities
+│   ├── tremendous.js              # Tremendous API client
+│   ├── sendgrid.js                # SendGrid email client
 │   └── achievements.js            # Badge logic and definitions
 ├── hooks/
 │   ├── useMissions.js
@@ -516,14 +664,28 @@ src/
 # Supabase
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_KEY=your_service_key  # For server-side operations
 
 # Stripe
 VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_webhook_secret
 
+# Tremendous API (Digital Gift Cards)
+TREMENDOUS_API_KEY=your_tremendous_api_key
+TREMENDOUS_FUNDING_SOURCE_ID=your_funding_source_id
+TREMENDOUS_CAMPAIGN_ID=your_campaign_id
+TREMENDOUS_BASE_URL=https://testflight.tremendous.com/api/v2  # Sandbox
+# TREMENDOUS_BASE_URL=https://www.tremendous.com/api/v2  # Production
+
+# SendGrid (Email Delivery)
+SENDGRID_API_KEY=your_sendgrid_api_key
+SENDGRID_FROM_EMAIL=rewards@missioncommand.app
+SENDGRID_TEMPLATE_ID=your_template_id
+
 # App
 VITE_APP_URL=http://localhost:5173 (or production URL)
+NODE_ENV=development  # or production
 ```
 
 ## Supabase Row Level Security (RLS) Policies
@@ -593,18 +755,52 @@ VITE_APP_URL=http://localhost:5173 (or production URL)
 
 ## Future Enhancements (Post-MVP)
 
+### Theming System
+- **Multiple visual themes:**
+  - **Military/Tactical** (default) - spy/agent theme
+  - **Princess/Royal** - castle, quests, royal decrees
+  - **Space/Sci-Fi** - missions, planets, alien encounters
+  - **Superhero** - save the city, villain missions
+  - **Medieval/Fantasy** - knights, quests, treasure
+  - **Pirate** - ship missions, treasure hunts
+  - **Ninja** - stealth missions, training
+- Theme affects:
+  - Colors, fonts, icons
+  - Mission terminology (quest vs mission vs assignment)
+  - Rank names (Agent vs Princess vs Astronaut)
+  - Badge designs
+  - Sound effects
+- Individual kid can pick their own theme
+- Custom theme creator (premium feature)
+
+### E-commerce Expansion
+- **Subscription boxes:** Monthly surprise reward (physical items shipped)
+- **Exclusive Mission Command merchandise:** Branded gear, apparel, accessories
+- **Partner products:** Official partnerships with toy brands (Nerf, LEGO)
+- **Virtual rewards:** In-game currency, Roblox/Fortnite codes
+- **Experience marketplace:** Local activities (laser tag, escape rooms, etc.)
+- **Gift cards:** Let kids earn Amazon/Target gift cards
+- **Seasonal catalogs:** Holiday specials, back-to-school, summer items
+- **Flash sales:** Limited-time deals on popular items
+- **Auction system:** Kids can bid points on rare items
+- **Trade-in program:** Send back old toys for points
+
 ### Gamification
 - Seasonal events (Summer Challenge, Holiday Mission Marathon)
 - Family tournaments/competitions
 - Mystery missions with surprise rewards
 - Boss battles (big chores worth mega points)
 - Power-ups (2x points weekends, etc.)
+- Daily login bonuses (streak rewards)
+- Loot boxes (random small rewards for milestones)
+- Mission chains (complete 5 related missions for bonus)
 
-### Social Features
-- Share badges on social media
-- Family vs. Family leaderboards (opt-in, privacy-focused)
+### Social Features (Privacy-Focused)
+- Private family vs. family leaderboards (opt-in, friend-only)
+- Share badges on social media (parent approval)
 - Mission templates shared by community
 - Parent forums/tips section
+- Kid-to-kid messaging (heavily moderated, parent controlled)
 
 ### Advanced Features
 - AI-suggested mission assignments based on kid's age/history
@@ -612,69 +808,163 @@ VITE_APP_URL=http://localhost:5173 (or production URL)
 - Apple Watch / smart watch integration
 - Calendar sync for mission due dates
 - Photo verification with AI (did they really clean the room?)
-- Allowance auto-payment integration (Venmo, PayPal)
+- Allowance auto-payment integration (Venmo, PayPal, Greenlight)
 - Chore rotation automation
 - Weather-based mission adjustments (rain = no lawn mowing)
 - School schedule integration (more missions on weekends)
+- Smart home integration (complete mission → earn smart light colors, game time unlock)
 
 ### Parent Tools
 - Chore completion analytics and insights
-- Family progress reports (weekly/monthly)
-- Export data (for taxes if paying allowance)
+- Family progress reports (weekly/monthly PDF exports)
+- A/B test mission rewards (find optimal point values)
+- Budget tracker for marketplace purchases
+- Export data for taxes (if paying allowance)
 - Multi-language support
 - Customizable point values
 - Age-based mission recommendations
 - Printable mission checklists (for offline use)
+- Batch mission creator
 
 ### Mobile Experience
 - Native iOS/Android apps (React Native)
-- Push notifications
+- Better push notifications
 - Offline mode (complete missions without internet, sync later)
 - Widget showing today's missions
+- Lock screen mission reminders
+- Barcode scanner (scan items for missions)
 
 ### Integrations
-- Google Calendar sync
+- Google Calendar / Apple Calendar sync
 - Apple Home/Google Home integration
 - IFTTT integration for automation
-- Smart home rewards (complete missions → earn smart light colors, etc.)
+- Greenlight debit card (allowance automation)
+- Educational platforms (Khan Academy, Duolingo missions)
+- Fitness trackers (FitBit, Apple Health - exercise missions)
 
 ## Monetization Notes
 
-### Pricing Tiers
-- **Free Trial:** 14 days, unlimited features
-- **Monthly Plan:** $5/month per family (unlimited kids)
-- **Annual Plan:** $50/year (save $10 = 2 months free)
-- **Lifetime:** $199 one-time (optional premium offering)
+### Revenue Streams
 
-### Freemium Consideration (Alternative Model)
-- **Free Tier:** 2 kids, 10 active missions max, basic badges
-- **Premium Tier:** $5/month - unlimited kids, unlimited missions, all badges, rewards store, mission photos, analytics
+#### 1. Subscription Revenue (Predictable MRR)
+**Tiered Pricing:**
+- **Free Tier:** 1 kid, 5 active missions max, basic badges, family custom rewards only (no gift cards)
+- **Basic Plan:** $7/month - 3 kids, unlimited missions, all badges, full gift card marketplace access
+- **Premium Plan:** $12/month - Unlimited kids, priority support, advanced analytics, exclusive gift cards
+
+**Recommended: Single Premium Tier**
+- **Family Plan:** $7/month - Unlimited kids, all features, full marketplace access
+- Simple, clear value proposition
+- Easy to explain to parents
+
+#### 2. Digital Gift Card Revenue (High-Margin Transactions)
+**How It Works:**
+- Kid earns points by completing missions (chores)
+- Kid redeems points for gift cards in marketplace
+- Parent pays cash to approve the reward
+- You buy gift card from Tremendous API and deliver instantly
+
+**Pricing Example:**
+- Kid wants: $25 Roblox Gift Card
+- Points required: 500 RP (proves they did the work)
+- Parent pays: $35
+- Your cost: $26.25 (Tremendous charges $25 + 5% fee)
+- Stripe fee: $1.32 (3% of $35)
+- Email cost: $0.001
+- **Your profit:** $7.42 per transaction (21% margin)
+
+**Why Parent Pays More Than Face Value:**
+- Points are the "earning" mechanism (kid did chores)
+- Parent pays for the actual reward
+- $35 feels fair for $35 worth of chores done
+- Kid gets $25 card, you keep $7.42 profit
+
+**Alternative Lower-Price Model:**
+- Parent pays: $30 (instead of $35)
+- Your profit: $2.42 per transaction (8% margin)
+- Lower margin but more attractive to parents
+- Higher conversion rate
+
+**Gift Card Catalog Tiers:**
+- **Low tier:** $10 cards → Parent pays $15 → Profit $3
+- **Mid tier:** $25 cards → Parent pays $35 → Profit $7.42
+- **High tier:** $50 cards → Parent pays $65 → Profit $12
+- **Premium tier:** $100 cards → Parent pays $125 → Profit $21
+
+---
 
 ### Revenue Projections
-- Target: 1,000 paying families in Year 1
-- Average revenue per family: $5/month
-- Monthly Recurring Revenue (MRR): $5,000
-- Annual Recurring Revenue (ARR): $60,000
-- With 5,000 families: $25,000/month = $300,000/year
 
-### Customer Acquisition
-- Target market: Parents with kids aged 5-15
-- Marketing channels:
-  - Parenting blogs and podcasts
-  - Facebook parent groups
-  - TikTok/Instagram parenting influencers
-  - Google Ads (search: "chore app for kids")
-  - App Store optimization
-  - Reddit (r/parenting, r/Mommit)
-  - YouTube (parenting channels)
-- Referral program: "Recruit a Family" - get 1 month free
+#### Scenario: 1,000 Active Families
 
-### Churn Prevention
-- Email reminders before trial ends
-- Success milestones ("Your kids have completed 50 missions!")
-- Parent testimonials and case studies
-- Regular feature updates and seasonal events
-- Excellent customer support
+**Subscription Revenue:**
+- 800 families @ $7/month = $5,600/month
+- 200 families on free tier = $0
+- **Total Subscription MRR:** $5,600/month = $67,200/year
+
+**Digital Gift Card Revenue:**
+- 50% of paid families redeem 1 card/month = 400 redemptions
+- Average denomination: $25
+- Average parent payment: $35
+- Average profit per order: $7.42
+- **Monthly gift card profit:** $2,968
+- **Annual gift card profit:** $35,616
+
+**Total Annual Revenue:** $102,816 from 1,000 families
+
+#### Scenario: 5,000 Active Families
+
+**Subscription Revenue:**
+- 4,000 families @ $7/month = $28,000/month = $336,000/year
+- 1,000 families free tier
+
+**Digital Gift Card Revenue:**
+- 50% redeem 1 card/month = 2,000 redemptions
+- $7.42 average profit × 2,000 = $14,840/month
+- **Annual gift card profit:** $178,080
+
+**Total Annual Revenue:** $514,080 from 5,000 families
+
+#### Scenario: 10,000 Active Families (Scale)
+
+**Subscription Revenue:**
+- 8,000 families @ $7/month = $56,000/month = $672,000/year
+
+**Digital Gift Card Revenue:**
+- 4,000 redemptions/month × $7.42 = $29,680/month
+- **Annual gift card profit:** $356,160
+
+**Total Annual Revenue:** $1,028,160/year
+
+---
+
+### Cost Structure
+
+**Monthly Operating Costs (5,000 families):**
+- Supabase Pro: $25/mo
+- Vercel Pro: $20/mo
+- SendGrid (10K emails): $20/mo
+- Stripe fees (subscriptions): ~$1,000/mo (3% of $28K)
+- Tremendous balance: $0 (pay as you go)
+- Domain & misc: $20/mo
+- Customer support: $100/mo (part-time)
+- **Total fixed costs:** ~$1,185/mo
+
+**Variable Costs:**
+- Stripe fees on gift cards: Included in margin calculations
+- Tremendous fees: Included in margin calculations
+- Email delivery: $0.001 per email (negligible)
+
+**Net Profit (5,000 families):**
+- Total revenue: $42,840/month
+- Operating costs: -$1,185/month
+- **Net monthly profit:** $41,655
+- **Annual net profit:** $499,860
+
+**Profit Margins:**
+- Subscription: 96% margin (SaaS standard)
+- Gift cards: 21% margin (retail standard)
+- **Blended margin:** 91% (incredible)
 
 ## Key Principles for Development
 
@@ -694,21 +984,42 @@ VITE_APP_URL=http://localhost:5173 (or production URL)
 You can start building this project by opening your terminal and running:
 
 ```bash
-claude code "Create Mission Command: a gamified chores app for families with kids. Use React, Vite, Tailwind CSS, and Supabase. Style it with a fun military/secret agent theme."
+claude code "Create Mission Command: a military-themed chores app for kids. Use React, Vite, Tailwind CSS, and Supabase. Follow the design spec in DESIGN_SPEC.md for professional tactical styling."
 ```
 
-Then iterate with prompts like:
-- "Style the app with a kid-friendly secret agent aesthetic - think Spy Kids movie"
-- "Create the family enlistment flow where parents sign up and add their kids as agents"
-- "Build the agent dashboard showing active missions, points, rank, and badges"
-- "Create the parent dashboard to assign missions and verify completions"
-- "Add the points and ranking system with celebration animations"
-- "Build the achievement badge system with auto-awards"
-- "Create the rewards store where kids can redeem points"
-- "Add Supabase authentication and database integration"
-- "Integrate Stripe for $5/month family subscriptions with 14-day free trial"
-- "Add mission photo upload for proof of completion"
+Then iterate with these prompts:
+
+**Phase 1: Core App (Week 1-2)**
+- "Create the family enlistment flow where parents sign up and add kids as agents"
+- "Build the Command Center dashboard showing active missions, points, rank"
+- "Implement mission creation and assignment system for parents"
+- "Add mission completion flow with parent verification"
+- "Build the points and ranking system with level-up animations"
+- "Create achievement badge system that auto-awards milestones"
+
+**Phase 2: Digital Rewards Marketplace (Week 3-4)**
+- "Build the gift card marketplace showing Roblox, Fortnite, Amazon cards"
+- "Implement redemption flow: kid selects card, parent gets notification to approve"
+- "Integrate Stripe for parent payment when approving gift card redemptions"
+- "Integrate Tremendous API to purchase and deliver digital gift cards"
+- "Create themed military email template for reward delivery"
+- "Integrate SendGrid to send reward emails with gift codes"
+
+**Phase 3: Polish & Launch (Week 5-6)**
+- "Add family custom rewards (parent-created, no cost)"
+- "Implement wishlist feature for gift cards"
+- "Add redemption history page"
+- "Create parent dashboard with family analytics"
+- "Implement recurring missions (daily/weekly auto-create)"
+- "Add push notifications for mission reminders and reward approvals"
+
+**Key Implementation Notes:**
+- Start with DESIGN_SPEC.md for exact visual styling (professional military aesthetic)
+- Use TREMENDOUS_INTEGRATION.md for complete API integration guide
+- Reference THEMES_SPEC.md for future theme expansion (not MVP)
+- Start with Tremendous testflight (sandbox) and Stripe test mode
+- Launch with 10-15 gift card brands, expand after validation
 
 ---
 
-**Remember:** This app should make kids EXCITED to do chores. Keep the theme fun, the rewards motivating, and the experience magical. When a kid completes a mission, they should feel like a real secret agent who just saved the world (or at least cleaned their room). MISSION SUCCESS! 🎖️
+**Remember:** This is not just a chore app—it's an instant rewards platform that makes kids EXCITED to do chores because they can earn REAL Roblox and Fortnite gift cards. The military theme makes it feel cool and official. The instant email delivery makes it magical. Parents love it because kids actually do chores. You love it because you profit $7+ per transaction with 90%+ margins. MISSION SUCCESS! 🎖️
