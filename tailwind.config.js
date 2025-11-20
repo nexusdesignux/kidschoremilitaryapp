@@ -48,7 +48,7 @@ export default {
         },
       },
       fontFamily: {
-        mono: ['JetBrains Mono', 'Courier New', 'monospace'],
+        mono: ['Quantico', 'Inter', 'sans-serif'],
         sans: ['Inter', 'Roboto', 'sans-serif'],
       },
       fontSize: {
