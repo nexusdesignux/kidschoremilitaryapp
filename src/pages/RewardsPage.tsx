@@ -1,9 +1,12 @@
-import { FC, useState } from 'react'
+import { FC, useState, useEffect } from 'react'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
+import { Modal } from '../components/ui/Modal'
 import { GiftCardCard } from '../components/rewards/GiftCardCard'
+import { RewardForm } from '../components/rewards/RewardForm'
 import { useAuthStore } from '../store/authStore'
-import { DEMO_GIFT_CARDS, DEMO_REWARDS } from '../utils/mockData'
+import { useRewardStore } from '../store/rewardStore'
+import { DEMO_GIFT_CARDS } from '../utils/mockData'
 
 type TabType = 'gift-cards' | 'family-rewards'
 type CategoryFilter = 'all' | 'gaming' | 'streaming' | 'shopping' | 'entertainment'
@@ -34,13 +37,22 @@ interface RedemptionRequest {
 }
 
 export const RewardsPage: FC = () => {
-  const { user } = useAuthStore()
+  const { user, family, demoMode } = useAuthStore()
+  const { rewards, loadRewards, addReward } = useRewardStore()
   const [activeTab, setActiveTab] = useState<TabType>('gift-cards')
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
   const [showPurchaseModal, setShowPurchaseModal] = useState(false)
+  const [showCreateRewardModal, setShowCreateRewardModal] = useState(false)
   const [redemptionRequest, setRedemptionRequest] = useState<RedemptionRequest | null>(null)
 
   const userPoints = user?.rank_points || 0
+
+  // Load rewards on mount
+  useEffect(() => {
+    if (family) {
+      loadRewards(family.id, demoMode)
+    }
+  }, [family, demoMode])
 
   // Filter gift cards by category
   const filteredGiftCards = DEMO_GIFT_CARDS.filter(gc => {
@@ -70,7 +82,7 @@ export const RewardsPage: FC = () => {
     setShowPurchaseModal(true)
   }
 
-  // Close modal
+  // Close purchase modal
   const handleCloseModal = () => {
     setShowPurchaseModal(false)
     setRedemptionRequest(null)
@@ -82,6 +94,19 @@ export const RewardsPage: FC = () => {
     console.log('Processing redemption:', redemptionRequest)
     alert('Redemption request submitted! Parent approval required.')
     handleCloseModal()
+  }
+
+  // Handle create reward
+  const handleCreateReward = async (rewardData: any) => {
+    if (!user || !family) return
+
+    try {
+      await addReward(rewardData, user.id, family.id, demoMode)
+      setShowCreateRewardModal(false)
+    } catch (error) {
+      console.error('Error creating reward:', error)
+      alert('Failed to create reward. Please try again.')
+    }
   }
 
   return (
@@ -193,15 +218,15 @@ export const RewardsPage: FC = () => {
         <div className="space-y-6">
           {user?.role === 'commander' && (
             <div className="flex justify-end">
-              <Button variant="gold">
+              <Button variant="gold" onClick={() => setShowCreateRewardModal(true)}>
                 + CREATE REWARD
               </Button>
             </div>
           )}
 
-          {DEMO_REWARDS.length > 0 ? (
+          {rewards.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {DEMO_REWARDS.map((reward) => {
+              {rewards.map((reward) => {
                 const canAfford = userPoints >= reward.cost_in_points
                 return (
                   <div
@@ -244,7 +269,7 @@ export const RewardsPage: FC = () => {
                   NO FAMILY REWARDS YET - TIME TO CREATE SOME
                 </div>
                 {user?.role === 'commander' && (
-                  <Button variant="gold">
+                  <Button variant="gold" onClick={() => setShowCreateRewardModal(true)}>
                     + CREATE REWARD
                   </Button>
                 )}
@@ -253,6 +278,19 @@ export const RewardsPage: FC = () => {
           )}
         </div>
       )}
+
+      {/* Create Reward Modal */}
+      <Modal
+        isOpen={showCreateRewardModal}
+        onClose={() => setShowCreateRewardModal(false)}
+        title="CREATE NEW REWARD"
+        size="md"
+      >
+        <RewardForm
+          onSubmit={handleCreateReward}
+          onCancel={() => setShowCreateRewardModal(false)}
+        />
+      </Modal>
 
       {/* Purchase Confirmation Modal */}
       {showPurchaseModal && redemptionRequest && (
