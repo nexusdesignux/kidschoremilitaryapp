@@ -168,6 +168,7 @@ export const RewardsPage: FC = () => {
                     key={giftCard.id}
                     giftCard={giftCard}
                     userPoints={userPoints}
+                    userRole={user?.role}
                     onRedeem={handleGiftCardRedeem}
                   />
                 ))}
@@ -206,6 +207,7 @@ export const RewardsPage: FC = () => {
                   key={giftCard.id}
                   giftCard={giftCard}
                   userPoints={userPoints}
+                  userRole={user?.role}
                   onRedeem={handleGiftCardRedeem}
                 />
               ))}

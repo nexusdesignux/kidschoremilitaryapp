@@ -18,10 +18,11 @@ interface GiftCard {
 interface GiftCardCardProps {
   giftCard: GiftCard
   userPoints: number
+  userRole?: string
   onRedeem: (giftCard: GiftCard, denomination: number) => void
 }
 
-export const GiftCardCard: FC<GiftCardCardProps> = ({ giftCard, userPoints, onRedeem }) => {
+export const GiftCardCard: FC<GiftCardCardProps> = ({ giftCard, userPoints, userRole, onRedeem }) => {
   const [selectedDenom, setSelectedDenom] = useState(giftCard.denominations[0])
 
   const pricing = calculatePricing(
@@ -82,12 +83,14 @@ export const GiftCardCard: FC<GiftCardCardProps> = ({ giftCard, userPoints, onRe
             {pricing.pointsRequired} RP
           </span>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-xs font-mono text-text-muted uppercase">Parent Pays</span>
-          <span className="text-lg font-mono font-bold text-accent-secondary">
-            ${pricing.parentCost}
-          </span>
-        </div>
+        {userRole !== 'agent' && (
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-mono text-text-muted uppercase">Parent Pays</span>
+            <span className="text-lg font-mono font-bold text-accent-secondary">
+              ${pricing.parentCost}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Action Button */}
