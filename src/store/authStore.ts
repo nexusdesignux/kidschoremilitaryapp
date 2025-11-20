@@ -3,6 +3,16 @@ import { persist } from 'zustand/middleware'
 import { supabase } from '../lib/supabase'
 import { DEMO_USERS, DEMO_FAMILIES, DEMO_ACCOUNTS } from '../utils/mockData'
 
+// Helper to determine rank based on points
+const getRankFromPoints = (points: number): string => {
+  if (points >= 1000) return 'LEGENDARY AGENT'
+  if (points >= 501) return 'MASTER AGENT'
+  if (points >= 301) return 'ELITE AGENT'
+  if (points >= 151) return 'FIELD AGENT'
+  if (points >= 51) return 'JUNIOR AGENT'
+  return 'RECRUIT'
+}
+
 interface User {
   id: string
   email: string | null
@@ -33,6 +43,7 @@ interface AuthState {
   enlist: (email: string, password: string, familyName: string, commanderName: string) => Promise<void>
   checkAuth: () => Promise<void>
   enableDemoMode: () => void
+  addPoints: (userId: string, points: number) => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -196,6 +207,57 @@ export const useAuthStore = create<AuthState>()(
           console.error('Auth check error:', error)
         } finally {
           set({ loading: false })
+        }
+      },
+
+      addPoints: async (userId: string, points: number) => {
+        const state = get()
+
+        if (state.demoMode) {
+          // In demo mode, update the current user's points if they match
+          if (state.user && state.user.id === userId) {
+            const newPoints = state.user.rank_points + points
+            set({
+              user: {
+                ...state.user,
+                rank_points: newPoints,
+                current_rank: getRankFromPoints(newPoints),
+              },
+            })
+          }
+          return
+        }
+
+        // Real Supabase update
+        const { data, error } = await supabase
+          .from('users')
+          .select('rank_points')
+          .eq('id', userId)
+          .single()
+
+        if (error) throw error
+
+        const newPoints = (data?.rank_points || 0) + points
+
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            rank_points: newPoints,
+            current_rank: getRankFromPoints(newPoints),
+          })
+          .eq('id', userId)
+
+        if (updateError) throw updateError
+
+        // Update local state if it's the current user
+        if (state.user && state.user.id === userId) {
+          set({
+            user: {
+              ...state.user,
+              rank_points: newPoints,
+              current_rank: getRankFromPoints(newPoints),
+            },
+          })
         }
       },
     }),

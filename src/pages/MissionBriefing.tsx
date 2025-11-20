@@ -11,7 +11,7 @@ import { formatDate } from '../utils/helpers'
 export const MissionBriefing: FC = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user, demoMode } = useAuthStore()
+  const { user, demoMode, addPoints } = useAuthStore()
   const { missions, updateMissionStatus, deleteMission } = useMissionStore()
   const [loading, setLoading] = useState(false)
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
@@ -102,7 +102,10 @@ export const MissionBriefing: FC = () => {
     setLoading(true)
     try {
       await updateMissionStatus(mission.id, 'verified', demoMode)
-      // In a real app, this would also award points to the agent
+      // Award points to the agent
+      if (mission.assigned_to) {
+        await addPoints(mission.assigned_to, mission.rank_points)
+      }
     } catch (error) {
       console.error('Error verifying mission:', error)
       alert('Failed to verify mission. Please try again.')
