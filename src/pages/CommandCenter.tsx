@@ -1,28 +1,17 @@
 import { FC, useEffect, useState } from 'react'
 import { useAuthStore } from '../store/authStore'
+import { useMissionStore } from '../store/missionStore'
 import { Button } from '../components/ui/Button'
+import { Modal } from '../components/ui/Modal'
 import { MissionList } from '../components/missions/MissionList'
+import { MissionForm } from '../components/missions/MissionForm'
 import { StatsWidget } from '../components/dashboard/StatsWidget'
 import { RankBadge } from '../components/agents/RankBadge'
-import { supabase } from '../lib/supabase'
-import { DEMO_MISSIONS } from '../utils/mockData'
-
-interface Mission {
-  id: string
-  title: string
-  description: string | null
-  category: string
-  difficulty: 'easy' | 'medium' | 'hard'
-  status: string
-  due_date: string | null
-  rank_points: number
-  assigned_to: string | null
-}
 
 export const CommandCenter: FC = () => {
   const { user, family, demoMode } = useAuthStore()
-  const [missions, setMissions] = useState<Mission[]>([])
-  const [loading, setLoading] = useState(true)
+  const { missions, loading, loadMissions, addMission } = useMissionStore()
+  const [showMissionForm, setShowMissionForm] = useState(false)
   const [stats, setStats] = useState({
     totalMissions: 0,
     completedToday: 0,
@@ -31,80 +20,48 @@ export const CommandCenter: FC = () => {
   })
 
   useEffect(() => {
-    if (user) {
-      loadMissions()
+    if (user && family) {
+      loadMissions(user.id, family.id, user.role, demoMode)
     }
-  }, [user])
+  }, [user, family, demoMode])
 
-  const loadMissions = async () => {
-    try {
-      setLoading(true)
-
-      // Use demo data in demo mode
-      if (demoMode) {
-        let filteredMissions = DEMO_MISSIONS
-
-        // Agents only see their own missions or unassigned missions
-        if (user?.role === 'agent') {
-          filteredMissions = DEMO_MISSIONS.filter(
-            m => m.assigned_to === user.id || m.assigned_to === null
-          )
-        }
-
-        setMissions(filteredMissions as any)
-
-        // Calculate stats from demo data
-        setStats({
-          totalMissions: filteredMissions.length,
-          completedToday: filteredMissions.filter(
-            m => m.status === 'completed' &&
-            new Date(m.completed_at || '').toDateString() === new Date().toDateString()
-          ).length,
-          streak: 3,
-          pendingMissions: filteredMissions.filter(
-            m => m.status === 'pending' || m.status === 'in_progress'
-          ).length,
-        })
-
-        setLoading(false)
-        return
-      }
-
-      // Real Supabase query
-      let query = supabase
-        .from('missions')
-        .select('*')
-        .eq('family_id', user?.family_id)
-        .order('created_at', { ascending: false })
-
-      // Agents only see their own missions
-      if (user?.role === 'agent') {
-        query = query.or(`assigned_to.eq.${user.id},assigned_to.is.null`)
-      }
-
-      const { data, error } = await query
-
-      if (error) throw error
-
-      setMissions(data || [])
-
-      // Calculate stats
+  useEffect(() => {
+    // Calculate stats from missions
+    if (missions.length > 0) {
       setStats({
-        totalMissions: data?.length || 0,
-        completedToday: data?.filter(m => m.status === 'completed' && new Date(m.completed_at || '').toDateString() === new Date().toDateString()).length || 0,
+        totalMissions: missions.length,
+        completedToday: missions.filter(
+          m => (m.status === 'completed' || m.status === 'verified') &&
+          new Date(m.completed_at || '').toDateString() === new Date().toDateString()
+        ).length,
         streak: 3, // TODO: Calculate actual streak
-        pendingMissions: data?.filter(m => m.status === 'pending' || m.status === 'in_progress').length || 0,
+        pendingMissions: missions.filter(
+          m => m.status === 'pending' || m.status === 'in_progress'
+        ).length,
       })
+    }
+  }, [missions])
+
+  const handleDeployMission = async (missionData: any) => {
+    if (!user || !family) return
+
+    try {
+      await addMission(missionData, user.id, family.id, demoMode)
+      setShowMissionForm(false)
     } catch (error) {
-      console.error('Error loading missions:', error)
-    } finally {
-      setLoading(false)
+      console.error('Error deploying mission:', error)
+      alert('Failed to deploy mission. Please try again.')
     }
   }
 
   if (!user || !family) return null
 
   const isCommander = user.role === 'commander' || user.role === 'lieutenant'
+
+  // Filter missions for agents
+  const displayMissions = isCommander
+    ? missions
+    : missions.filter(m => m.assigned_to === user.id || m.assigned_to === null)
 
   return (
     <div className="space-y-8">
@@ -158,7 +115,7 @@ export const CommandCenter: FC = () => {
           {isCommander ? 'ALL MISSIONS' : 'YOUR MISSIONS'}
         </h2>
         {isCommander && (
-          <Button variant="gold" onClick={() => {/* TODO: Open mission creation modal */}}>
+          <Button variant="gold" onClick={() => setShowMissionForm(true)}>
             + DEPLOY NEW MISSION
           </Button>
         )}
@@ -174,7 +131,7 @@ export const CommandCenter: FC = () => {
         </div>
       ) : (
         <MissionList
-          missions={missions}
+          missions={displayMissions}
           emptyMessage={
             isCommander
               ? 'NO MISSIONS DEPLOYED - CREATE YOUR FIRST MISSION'
@@ -182,6 +139,20 @@ export const CommandCenter: FC = () => {
           }
         />
       )}
+
+      {/* Mission Creation Modal */}
+      <Modal
+        isOpen={showMissionForm}
+        onClose={() => setShowMissionForm(false)}
+        title="DEPLOY NEW MISSION"
+        size="lg"
+      >
+        <MissionForm
+          onSubmit={handleDeployMission}
+          onCancel={() => setShowMissionForm(false)}
+          familyId={family.id}
+        />
+      </Modal>
     </div>
   )
 }
