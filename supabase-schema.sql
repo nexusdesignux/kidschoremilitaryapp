@@ -174,6 +174,81 @@ CREATE POLICY "Users can redeem rewards"
   ON reward_redemptions FOR INSERT
   WITH CHECK (user_id = auth.uid());
 
+-- Gift Cards Table (Tremendous API catalog)
+CREATE TABLE IF NOT EXISTS gift_cards (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tremendous_product_id TEXT NOT NULL UNIQUE,
+  brand_name TEXT NOT NULL,
+  display_name TEXT NOT NULL,
+  description TEXT,
+  category TEXT NOT NULL DEFAULT 'other' CHECK (category IN ('gaming', 'streaming', 'shopping', 'entertainment', 'other')),
+  denominations INTEGER[] NOT NULL,
+  brand_logo_url TEXT,
+  point_cost_per_dollar INTEGER DEFAULT 20,
+  parent_cost_markup DECIMAL(3, 2) DEFAULT 0.40,
+  is_active BOOLEAN DEFAULT TRUE,
+  is_featured BOOLEAN DEFAULT FALSE,
+  age_minimum INTEGER DEFAULT 0,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Gift Card Redemptions Table
+CREATE TABLE IF NOT EXISTS gift_card_redemptions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  gift_card_id UUID NOT NULL REFERENCES gift_cards(id) ON DELETE CASCADE,
+  denomination INTEGER NOT NULL,
+  points_spent INTEGER NOT NULL,
+  parent_cost_usd DECIMAL(10, 2) NOT NULL,
+  tremendous_cost_usd DECIMAL(10, 2),
+  profit_usd DECIMAL(10, 2),
+  stripe_payment_intent_id TEXT,
+  tremendous_order_id TEXT,
+  tremendous_reward_id TEXT,
+  gift_code TEXT,
+  redemption_url TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'processing', 'delivered', 'failed', 'rejected')),
+  approved_by UUID REFERENCES users(id),
+  approved_at TIMESTAMP WITH TIME ZONE,
+  email_sent_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Update rewards table to add reward_type and description
+ALTER TABLE rewards ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE rewards ADD COLUMN IF NOT EXISTS reward_type TEXT DEFAULT 'experience' CHECK (reward_type IN ('experience', 'privilege', 'item'));
+
+-- Update reward_redemptions table to add fulfillment tracking
+ALTER TABLE reward_redemptions ADD COLUMN IF NOT EXISTS fulfilled_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE reward_redemptions ADD COLUMN IF NOT EXISTS fulfilled_by UUID REFERENCES users(id);
+
+-- Enable RLS on new tables
+ALTER TABLE gift_cards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE gift_card_redemptions ENABLE ROW LEVEL SECURITY;
+
+-- Gift Cards Policies (public read for active cards)
+CREATE POLICY "Anyone can view active gift cards"
+  ON gift_cards FOR SELECT
+  USING (is_active = TRUE);
+
+-- Gift Card Redemptions Policies
+CREATE POLICY "Users can view their own gift card redemptions"
+  ON gift_card_redemptions FOR SELECT
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Commanders can view all family gift card redemptions"
+  ON gift_card_redemptions FOR SELECT
+  USING (user_id IN (SELECT id FROM users WHERE family_id IN (SELECT family_id FROM users WHERE id = auth.uid())));
+
+CREATE POLICY "Users can create gift card redemption requests"
+  ON gift_card_redemptions FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Commanders can update gift card redemptions"
+  ON gift_card_redemptions FOR UPDATE
+  USING (user_id IN (SELECT id FROM users WHERE family_id IN (SELECT family_id FROM users WHERE id = auth.uid() AND role IN ('commander', 'lieutenant'))));
+
 -- Create indexes for performance
 CREATE INDEX idx_users_family_id ON users(family_id);
 CREATE INDEX idx_missions_family_id ON missions(family_id);
@@ -182,3 +257,7 @@ CREATE INDEX idx_missions_status ON missions(status);
 CREATE INDEX idx_achievements_user_id ON achievements(user_id);
 CREATE INDEX idx_rewards_family_id ON rewards(family_id);
 CREATE INDEX idx_reward_redemptions_user_id ON reward_redemptions(user_id);
+CREATE INDEX idx_gift_cards_category ON gift_cards(category);
+CREATE INDEX idx_gift_cards_is_active ON gift_cards(is_active);
+CREATE INDEX idx_gift_card_redemptions_user_id ON gift_card_redemptions(user_id);
+CREATE INDEX idx_gift_card_redemptions_status ON gift_card_redemptions(status);
