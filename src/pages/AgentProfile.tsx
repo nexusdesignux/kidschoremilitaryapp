@@ -4,6 +4,7 @@ import { useMissionStore } from '../store/missionStore'
 import { RankBadge } from '../components/agents/RankBadge'
 import { StatsWidget } from '../components/dashboard/StatsWidget'
 import { Badge } from '../components/ui/Badge'
+import { TypeWriter } from '../components/ui/TypeWriter'
 import { DEMO_ACHIEVEMENTS } from '../utils/mockData'
 import { getAvatarUrl } from '../utils/helpers'
 
@@ -75,7 +76,7 @@ export const AgentProfile: FC = () => {
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="mb-8">
         <h1 className="text-2xl font-mono font-bold text-white uppercase tracking-wider mb-1">
-          AGENT PROFILE
+          <TypeWriter text="AGENT PROFILE" typingSpeed={40} pauseDuration={5000} />
         </h1>
         <p className="text-sm font-mono text-text-muted uppercase">
           {user.agent_code}

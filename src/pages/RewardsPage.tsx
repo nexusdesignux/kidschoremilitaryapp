@@ -4,6 +4,7 @@ import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { GiftCardCard } from '../components/rewards/GiftCardCard'
 import { RewardForm } from '../components/rewards/RewardForm'
+import { TypeWriter } from '../components/ui/TypeWriter'
 import { useAuthStore } from '../store/authStore'
 import { useRewardStore } from '../store/rewardStore'
 import { DEMO_GIFT_CARDS } from '../utils/mockData'
@@ -114,7 +115,7 @@ export const RewardsPage: FC = () => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-mono font-bold text-white uppercase tracking-wider mb-1">
-          REWARDS STORE
+          <TypeWriter text="REWARDS STORE" typingSpeed={40} pauseDuration={5000} />
         </h1>
         <p className="text-sm font-mono text-text-muted uppercase">
           Redeem Your Points for Digital Gift Cards & Family Rewards

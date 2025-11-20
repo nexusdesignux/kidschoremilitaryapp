@@ -67,7 +67,15 @@ export const MissionCard: FC<MissionCardProps> = ({ mission }) => {
             {category.label}
           </p>
         </div>
-        <div className="flex gap-2 ml-4">
+        <div className="flex items-center gap-2 ml-4">
+          {/* Blinking dots for active missions */}
+          {(mission.status === 'in_progress' || mission.status === 'pending') && (
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 bg-accent-primary rounded-full animate-blink" />
+              <span className="w-1.5 h-1.5 bg-accent-primary rounded-full animate-blink-delay-1" />
+              <span className="w-1.5 h-1.5 bg-accent-primary rounded-full animate-blink-delay-2" />
+            </div>
+          )}
           <Badge variant={getStatusVariant()}>
             {status.label}
           </Badge>

@@ -2,6 +2,7 @@ import { FC, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
+import { TypeWriter } from '../components/ui/TypeWriter'
 import { useAuthStore } from '../store/authStore'
 import { useMissionStore } from '../store/missionStore'
 import { MISSION_CATEGORIES } from '../utils/constants'
@@ -152,7 +153,7 @@ export const MissionBriefing: FC = () => {
 
       <div className="mb-8">
         <h1 className="text-2xl font-mono font-bold text-white uppercase tracking-wider mb-1">
-          MISSION BRIEFING
+          <TypeWriter text="MISSION BRIEFING" typingSpeed={40} pauseDuration={5000} />
         </h1>
         <p className="text-sm font-mono text-text-muted uppercase">
           Classified Mission #{mission.id.slice(-6)}

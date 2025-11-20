@@ -4,6 +4,7 @@ import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
+import { TypeWriter } from '../components/ui/TypeWriter'
 import { DEMO_USERS } from '../utils/mockData'
 import { getAvatarUrl, generateAgentCode } from '../utils/helpers'
 
@@ -75,7 +76,7 @@ export const FamilySettings: FC = () => {
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="mb-8">
         <h1 className="text-2xl font-mono font-bold text-white uppercase tracking-wider mb-1">
-          FAMILY SETTINGS
+          <TypeWriter text="FAMILY SETTINGS" typingSpeed={40} pauseDuration={5000} />
         </h1>
         <p className="text-sm font-mono text-text-muted uppercase">
           Command Center Configuration

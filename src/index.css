@@ -201,3 +201,40 @@
 .animate-scale-in {
   animation: scaleIn 0.3s ease;
 }
+
+/* Blinking dot animation for active missions */
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+.animate-blink {
+  animation: blink 1s infinite;
+}
+
+/* Staggered blinking for multiple dots */
+.animate-blink-delay-1 {
+  animation: blink 1s infinite 0.2s;
+}
+
+.animate-blink-delay-2 {
+  animation: blink 1s infinite 0.4s;
+}
+
+/* Typing cursor blink */
+@keyframes cursor-blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+.animate-cursor {
+  animation: cursor-blink 0.8s infinite;
+}

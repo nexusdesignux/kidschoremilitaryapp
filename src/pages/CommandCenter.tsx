@@ -7,6 +7,7 @@ import { MissionList } from '../components/missions/MissionList'
 import { MissionForm } from '../components/missions/MissionForm'
 import { StatsWidget } from '../components/dashboard/StatsWidget'
 import { RankBadge } from '../components/agents/RankBadge'
+import { TypeWriter } from '../components/ui/TypeWriter'
 
 export const CommandCenter: FC = () => {
   const { user, family, demoMode } = useAuthStore()
@@ -68,7 +69,11 @@ export const CommandCenter: FC = () => {
       {/* Welcome Header */}
       <div>
         <h1 className="text-2xl font-mono font-bold text-white uppercase tracking-wider mb-1">
-          WELCOME BACK, {isCommander ? 'COMMANDER' : 'AGENT'} {user.full_name.split(' ')[0].toUpperCase()}
+          <TypeWriter
+            text={`WELCOME BACK, ${isCommander ? 'COMMANDER' : 'AGENT'} ${user.full_name.split(' ')[0].toUpperCase()}`}
+            typingSpeed={40}
+            pauseDuration={5000}
+          />
         </h1>
         <p className="text-sm font-mono text-text-muted uppercase">
           {family.name} Command Center
