@@ -60,9 +60,17 @@ export const CommandCenter: FC = () => {
   const isCommander = user.role === 'commander' || user.role === 'lieutenant'
 
   // Filter missions for agents
-  const displayMissions = isCommander
+  const userMissions = isCommander
     ? missions
     : missions.filter(m => m.assigned_to === user.id || m.assigned_to === null)
+
+  // Separate active and completed missions
+  const activeMissions = userMissions.filter(
+    m => m.status === 'pending' || m.status === 'in_progress' || m.status === 'awaiting_verification'
+  )
+  const completedMissions = userMissions.filter(
+    m => m.status === 'completed' || m.status === 'verified'
+  )
 
   return (
     <div className="space-y-8">
@@ -114,35 +122,55 @@ export const CommandCenter: FC = () => {
         </div>
       )}
 
-      {/* Mission Actions */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-mono font-bold text-white uppercase tracking-wide">
-          {isCommander ? 'ALL MISSIONS' : 'YOUR MISSIONS'}
-        </h2>
-        {isCommander && (
-          <Button variant="gold" onClick={() => setShowMissionForm(true)}>
-            + DEPLOY NEW MISSION
-          </Button>
+      {/* Active Missions Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-mono font-bold text-white uppercase tracking-wide">
+            {isCommander ? 'ACTIVE MISSIONS' : 'YOUR ACTIVE MISSIONS'}
+          </h2>
+          {isCommander && (
+            <Button variant="gold" onClick={() => setShowMissionForm(true)}>
+              + DEPLOY NEW MISSION
+            </Button>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="text-accent-primary text-3xl mb-4">▲</div>
+            <div className="text-sm font-mono text-text-muted uppercase tracking-wider">
+              LOADING MISSIONS...
+            </div>
+          </div>
+        ) : (
+          <MissionList
+            missions={activeMissions}
+            emptyMessage={
+              isCommander
+                ? 'NO ACTIVE MISSIONS - ALL MISSIONS COMPLETE'
+                : 'NO ACTIVE MISSIONS - AWAITING NEW ASSIGNMENTS'
+            }
+          />
         )}
       </div>
 
-      {/* Missions List */}
-      {loading ? (
-        <div className="text-center py-16">
-          <div className="text-accent-primary text-3xl mb-4">▲</div>
-          <div className="text-sm font-mono text-text-muted uppercase tracking-wider">
-            LOADING MISSIONS...
+      {/* Completed Missions Section */}
+      {completedMissions.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-mono font-bold text-text-muted uppercase tracking-wide">
+              COMPLETED MISSIONS
+            </h2>
+            <span className="text-sm font-mono text-text-muted">
+              {completedMissions.length} {completedMissions.length === 1 ? 'MISSION' : 'MISSIONS'}
+            </span>
           </div>
+
+          <MissionList
+            missions={completedMissions}
+            emptyMessage=""
+          />
         </div>
-      ) : (
-        <MissionList
-          missions={displayMissions}
-          emptyMessage={
-            isCommander
-              ? 'NO MISSIONS DEPLOYED - CREATE YOUR FIRST MISSION'
-              : 'NO ACTIVE MISSIONS - AWAITING NEW ASSIGNMENTS'
-          }
-        />
       )}
 
       {/* Mission Creation Modal */}
