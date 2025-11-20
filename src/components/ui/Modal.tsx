@@ -1,5 +1,4 @@
 import { FC, ReactNode, useEffect } from 'react'
-import { classNames } from '../../utils/helpers'
 
 interface ModalProps {
   isOpen: boolean
@@ -35,32 +34,29 @@ export const Modal: FC<ModalProps> = ({ isOpen, onClose, title, children, size =
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-75 transition-opacity"
+        className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
-        className={classNames(
-          'relative bg-navy-light border-2 border-tactical rounded-lg shadow-2xl w-full',
-          sizeStyles[size]
-        )}
+        className={`relative bg-bg-secondary border border-accent-primary w-full p-10 shadow-glow-modal animate-scale-in ${sizeStyles[size]}`}
       >
         {/* Header */}
         {title && (
-          <div className="border-b-2 border-tactical p-6">
-            <h2 className="text-2xl font-header uppercase tracking-wide text-gold">{title}</h2>
+          <div className="border-b border-border-primary pb-4 mb-6">
+            <h2 className="text-xl font-mono font-bold uppercase tracking-wide text-white">{title}</h2>
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white text-3xl leading-none"
+              className="absolute top-4 right-4 text-text-muted hover:text-white text-2xl leading-none font-mono"
             >
-              &times;
+              ×
             </button>
           </div>
         )}
 
         {/* Content */}
-        <div className="p-6">{children}</div>
+        <div>{children}</div>
       </div>
     </div>
   )

@@ -1,5 +1,4 @@
 import { ButtonHTMLAttributes, FC, ReactNode } from 'react'
-import { classNames } from '../../utils/helpers'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'gold' | 'danger'
@@ -13,34 +12,28 @@ export const Button: FC<ButtonProps> = ({
   size = 'md',
   children,
   fullWidth = false,
-  className,
+  className = '',
   disabled,
   ...props
 }) => {
-  const baseStyles = 'font-bold rounded-lg transition-all uppercase tracking-wide focus:outline-none focus:ring-2 focus:ring-tactical disabled:opacity-50 disabled:cursor-not-allowed'
+  const baseStyles = 'font-mono font-bold uppercase tracking-wide transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed'
 
   const variantStyles = {
-    primary: 'bg-tactical hover:bg-tactical-light text-white transform hover:scale-105 active:scale-95',
-    secondary: 'bg-navy-light hover:bg-navy text-white border-2 border-tactical',
-    gold: 'bg-gold hover:bg-gold-light text-navy transform hover:scale-105 active:scale-95 shadow-lg',
-    danger: 'bg-mission-red hover:bg-red-600 text-white transform hover:scale-105 active:scale-95',
+    primary: 'bg-accent-primary text-black hover:shadow-glow-green',
+    secondary: 'bg-transparent text-white border border-border-primary hover:border-accent-primary hover:text-accent-primary',
+    gold: 'bg-accent-secondary text-black hover:shadow-glow-gold',
+    danger: 'bg-accent-danger text-white hover:bg-red-500',
   }
 
   const sizeStyles = {
-    sm: 'py-2 px-4 text-sm',
-    md: 'py-3 px-6 text-base',
-    lg: 'py-4 px-8 text-lg',
+    sm: 'py-2 px-4 text-xs',
+    md: 'py-3 px-6 text-sm',
+    lg: 'py-4 px-8 text-base',
   }
 
   return (
     <button
-      className={classNames(
-        baseStyles,
-        variantStyles[variant],
-        sizeStyles[size],
-        fullWidth && 'w-full',
-        className
-      )}
+      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
       disabled={disabled}
       {...props}
     >

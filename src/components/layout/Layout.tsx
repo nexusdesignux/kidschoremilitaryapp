@@ -13,24 +13,26 @@ export const Layout: FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4 animate-bounce">🎯</div>
-          <div className="text-2xl font-header text-gold uppercase tracking-wide">
-            LOADING MISSION DATA...
+          <div className="text-accent-primary text-3xl mb-4">▲</div>
+          <div className="text-sm font-mono text-white uppercase tracking-wider mb-2">
+            LOADING MISSION DATA
           </div>
-          <div className="mt-4 text-gray-400">Accessing Secure Command Center</div>
+          <div className="text-xs font-mono text-text-muted">
+            Accessing secure command center...
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-navy">
+    <div className="min-h-screen bg-bg-primary">
       <Header />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-10 max-w-[1400px]">
           <Outlet />
         </main>
       </div>

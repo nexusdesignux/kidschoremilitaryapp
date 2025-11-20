@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
-import { Card } from '../components/ui/Card'
 import { DEMO_ACCOUNTS } from '../utils/mockData'
 
 export const Login: FC = () => {
@@ -34,46 +33,46 @@ export const Login: FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-navy via-navy-dark to-black">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-bg-primary">
       <div className="max-w-md w-full">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🔒</div>
-          <h1 className="text-5xl font-header text-gold mb-2 uppercase tracking-wide">
+          <div className="text-accent-primary text-4xl mb-4">▲</div>
+          <h1 className="text-2xl font-mono font-bold text-white mb-2 uppercase tracking-wider">
             ACCESS GRANTED
           </h1>
-          <p className="text-xl text-tactical-light font-bold uppercase tracking-wide">
-            SECURE LOGIN
+          <p className="text-sm font-mono text-text-muted uppercase tracking-wide">
+            SECURE LOGIN PROTOCOL
           </p>
         </div>
 
         {/* Demo Accounts Banner */}
         {showDemoAccounts && (
-          <Card className="mb-6 bg-tactical bg-opacity-10 border-tactical-light">
+          <div className="mb-6 bg-bg-secondary border border-accent-primary p-6">
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h3 className="text-lg font-header text-gold uppercase mb-3">
-                  🎮 DEMO MODE AVAILABLE
+                <h3 className="text-sm font-mono font-bold text-accent-secondary uppercase mb-3">
+                  DEMO MODE AVAILABLE
                 </h3>
-                <p className="text-sm text-gray-300 mb-4">
-                  Try the app without setting up Supabase! Use these test accounts:
+                <p className="text-xs text-text-secondary mb-4 font-mono">
+                  Try the app without setting up Supabase. Click to select:
                 </p>
                 <div className="space-y-2">
                   {DEMO_ACCOUNTS.map((account) => (
                     <div
                       key={account.email}
-                      className="bg-navy-dark rounded p-3 cursor-pointer hover:bg-navy transition-colors"
+                      className="bg-bg-tertiary border border-border-primary p-3 cursor-pointer hover:border-accent-primary transition-colors"
                       onClick={() => setFormData({ email: account.email, password: account.password })}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-bold text-white">{account.name}</div>
-                          <div className="text-xs text-gray-400">
-                            {account.email} / {account.password}
+                          <div className="font-bold text-white text-sm font-mono">{account.name}</div>
+                          <div className="text-xs text-text-muted font-mono">
+                            {account.email}
                           </div>
                         </div>
-                        <div className="text-xs text-tactical-light uppercase font-bold">
-                          Click to fill
+                        <div className="text-xs text-accent-primary uppercase font-bold font-mono">
+                          SELECT
                         </div>
                       </div>
                     </div>
@@ -82,15 +81,15 @@ export const Login: FC = () => {
               </div>
               <button
                 onClick={() => setShowDemoAccounts(false)}
-                className="text-gray-400 hover:text-white text-2xl ml-4"
+                className="text-text-muted hover:text-white text-xl ml-4 font-mono"
               >
                 ×
               </button>
             </div>
-          </Card>
+          </div>
         )}
 
-        <Card>
+        <div className="bg-bg-secondary border border-border-primary p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Email"
@@ -111,8 +110,8 @@ export const Login: FC = () => {
             />
 
             {error && (
-              <div className="bg-mission-red bg-opacity-20 border-2 border-mission-red text-white px-4 py-3 rounded-lg">
-                🔒 {error}
+              <div className="bg-accent-danger bg-opacity-10 border border-accent-danger text-white px-4 py-3 text-sm font-mono">
+                {error}
               </div>
             )}
 
@@ -129,26 +128,26 @@ export const Login: FC = () => {
               <button
                 type="button"
                 onClick={() => setShowDemoAccounts(true)}
-                className="w-full text-center text-tactical-light hover:text-tactical text-sm uppercase tracking-wide"
+                className="w-full text-center text-accent-primary hover:text-white text-xs uppercase tracking-wide font-mono mt-2"
               >
                 Show Demo Accounts
               </button>
             )}
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-400">
+          <div className="mt-6 text-center border-t border-border-primary pt-6">
+            <p className="text-text-muted text-sm font-mono">
               Not enlisted yet?{' '}
-              <Link to="/" className="text-tactical-light hover:text-tactical font-bold">
-                ENLIST YOUR SQUAD →
+              <Link to="/" className="text-accent-primary hover:text-white font-bold">
+                ENLIST YOUR SQUAD
               </Link>
             </p>
           </div>
-        </Card>
+        </div>
 
         {/* Security Notice */}
-        <div className="mt-8 text-center text-xs text-gray-500">
-          <p>🔐 SECURE CONNECTION • ENCRYPTED TRANSMISSION</p>
+        <div className="mt-6 text-center text-xs text-text-muted font-mono">
+          <p>SECURE CONNECTION • ENCRYPTED TRANSMISSION</p>
         </div>
       </div>
     </div>

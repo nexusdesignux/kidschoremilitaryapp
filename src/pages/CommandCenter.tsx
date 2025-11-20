@@ -109,55 +109,52 @@ export const CommandCenter: FC = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Header */}
-      <div className="text-center">
-        <h1 className="text-5xl font-header text-gold uppercase tracking-wide mb-2">
-          WELCOME BACK, {isCommander ? 'COMMANDER' : 'AGENT'} {user.full_name.split(' ')[0].toUpperCase()}! 🎖️
+      <div>
+        <h1 className="text-2xl font-mono font-bold text-white uppercase tracking-wider mb-1">
+          WELCOME BACK, {isCommander ? 'COMMANDER' : 'AGENT'} {user.full_name.split(' ')[0].toUpperCase()}
         </h1>
-        <p className="text-xl text-tactical-light uppercase tracking-wide">
+        <p className="text-sm font-mono text-text-muted uppercase">
           {family.name} Command Center
         </p>
       </div>
 
       {/* Stats Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsWidget
-          icon="🎯"
           label="Active Missions"
           value={stats.pendingMissions}
           subtext="Awaiting completion"
         />
         <StatsWidget
-          icon="✅"
           label="Completed Today"
           value={stats.completedToday}
-          subtext="Keep going!"
+          subtext="Keep going"
+          variant="green"
         />
         <StatsWidget
-          icon="🔥"
           label="Current Streak"
-          value={`${stats.streak} Days`}
-          subtext="Don't break it!"
-          color="mission-orange"
+          value={`${stats.streak} DAYS`}
+          subtext="Don't break it"
+          variant="danger"
         />
         <StatsWidget
-          icon="⭐"
           label="Total Points"
           value={user.rank_points}
           subtext={user.current_rank}
-          color="gold"
+          variant="gold"
         />
       </div>
 
       {/* Rank Progress (for Agents) */}
       {user.role === 'agent' && (
-        <div className="bg-navy-light border-2 border-tactical rounded-lg p-8">
+        <div className="bg-bg-secondary border border-border-primary p-8">
           <RankBadge points={user.rank_points} showProgress size="md" />
         </div>
       )}
 
       {/* Mission Actions */}
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-header text-white uppercase tracking-wide">
+        <h2 className="text-lg font-mono font-bold text-white uppercase tracking-wide">
           {isCommander ? 'ALL MISSIONS' : 'YOUR MISSIONS'}
         </h2>
         {isCommander && (
@@ -170,8 +167,8 @@ export const CommandCenter: FC = () => {
       {/* Missions List */}
       {loading ? (
         <div className="text-center py-16">
-          <div className="text-6xl mb-4 animate-bounce">🎯</div>
-          <div className="text-2xl font-header text-gold uppercase tracking-wide">
+          <div className="text-accent-primary text-3xl mb-4">▲</div>
+          <div className="text-sm font-mono text-text-muted uppercase tracking-wider">
             LOADING MISSIONS...
           </div>
         </div>
@@ -180,7 +177,7 @@ export const CommandCenter: FC = () => {
           missions={missions}
           emptyMessage={
             isCommander
-              ? 'NO MISSIONS DEPLOYED - CREATE YOUR FIRST MISSION!'
+              ? 'NO MISSIONS DEPLOYED - CREATE YOUR FIRST MISSION'
               : 'NO ACTIVE MISSIONS - AWAITING NEW ASSIGNMENTS'
           }
         />

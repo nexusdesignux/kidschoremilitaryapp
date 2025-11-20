@@ -1,5 +1,4 @@
 import { FC, ReactNode } from 'react'
-import { classNames } from '../../utils/helpers'
 
 interface CardProps {
   children: ReactNode
@@ -8,15 +7,12 @@ interface CardProps {
   hover?: boolean
 }
 
-export const Card: FC<CardProps> = ({ children, className, onClick, hover = false }) => {
+export const Card: FC<CardProps> = ({ children, className = '', onClick, hover = false }) => {
   return (
     <div
-      className={classNames(
-        'bg-navy-light border-2 border-tactical rounded-lg p-6 shadow-lg',
-        hover && 'transition-all hover:shadow-xl hover:border-tactical-light cursor-pointer hover:-translate-y-1',
-        onClick && 'cursor-pointer',
-        className
-      )}
+      className={`bg-bg-secondary border border-border-primary p-6 transition-colors duration-200 ${
+        hover || onClick ? 'hover:border-accent-primary cursor-pointer' : ''
+      } ${className}`}
       onClick={onClick}
     >
       {children}

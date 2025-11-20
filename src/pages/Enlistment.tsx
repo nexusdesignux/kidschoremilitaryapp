@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
-import { Card } from '../components/ui/Card'
 
 export const Enlistment: FC = () => {
   const navigate = useNavigate()
@@ -45,20 +44,20 @@ export const Enlistment: FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-navy via-navy-dark to-black">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-bg-primary">
       <div className="max-w-md w-full">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🎖️</div>
-          <h1 className="text-5xl font-header text-gold mb-2 uppercase tracking-wide">
+          <div className="text-accent-primary text-4xl mb-4">▲</div>
+          <h1 className="text-2xl font-mono font-bold text-white mb-2 uppercase tracking-wider">
             MISSION COMMAND
           </h1>
-          <p className="text-xl text-tactical-light font-bold uppercase tracking-wide">
+          <p className="text-sm font-mono text-text-muted uppercase tracking-wide">
             ENLIST YOUR SQUADRON
           </p>
         </div>
 
-        <Card>
+        <div className="bg-bg-secondary border border-border-primary p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Commander Email"
@@ -106,8 +105,8 @@ export const Enlistment: FC = () => {
             />
 
             {error && (
-              <div className="bg-mission-red bg-opacity-20 border-2 border-mission-red text-white px-4 py-3 rounded-lg">
-                ⚠️ {error}
+              <div className="bg-accent-danger bg-opacity-10 border border-accent-danger text-white px-4 py-3 text-sm font-mono">
+                {error}
               </div>
             )}
 
@@ -121,21 +120,21 @@ export const Enlistment: FC = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-400">
+          <div className="mt-6 text-center border-t border-border-primary pt-6">
+            <p className="text-text-muted text-sm font-mono">
               Already enlisted?{' '}
-              <Link to="/login" className="text-tactical-light hover:text-tactical font-bold">
-                ACCESS GRANTED →
+              <Link to="/login" className="text-accent-primary hover:text-white font-bold">
+                ACCESS GRANTED
               </Link>
             </p>
           </div>
-        </Card>
+        </div>
 
         {/* Features */}
-        <div className="mt-8 text-center space-y-2 text-sm text-gray-400">
-          <p>✓ 14-Day Free Trial</p>
-          <p>✓ Unlimited Agents (Kids)</p>
-          <p>✓ Gamified Chore Management</p>
+        <div className="mt-6 text-center space-y-2 text-xs text-text-muted font-mono">
+          <p>14-DAY FREE TRIAL</p>
+          <p>UNLIMITED AGENTS</p>
+          <p>GAMIFIED CHORE MANAGEMENT</p>
         </div>
       </div>
     </div>

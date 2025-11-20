@@ -12,22 +12,22 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-bold mb-2 uppercase tracking-wide text-gray-300">
+          <label className="block text-xs font-bold mb-2 uppercase tracking-wider text-text-secondary font-mono">
             {label}
           </label>
         )}
         <input
           ref={ref}
           className={classNames(
-            'w-full px-4 py-3 bg-navy-dark border-2 rounded-lg text-white placeholder-gray-400',
-            'focus:outline-none focus:border-tactical transition-colors',
-            error ? 'border-mission-red' : 'border-gray-600',
+            'w-full px-4 py-3 bg-bg-secondary border text-white placeholder-text-muted font-mono text-sm',
+            'focus:outline-none focus:border-accent-primary focus:shadow-glow-green transition-all duration-200',
+            error ? 'border-accent-danger' : 'border-border-primary',
             className
           )}
           {...props}
         />
-        {error && <p className="mt-1 text-sm text-mission-red">{error}</p>}
-        {helperText && !error && <p className="mt-1 text-sm text-gray-400">{helperText}</p>}
+        {error && <p className="mt-2 text-xs text-accent-danger font-mono">{error}</p>}
+        {helperText && !error && <p className="mt-2 text-xs text-text-muted font-mono">{helperText}</p>}
       </div>
     )
   }

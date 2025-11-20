@@ -26,8 +26,8 @@ export const MissionList: FC<MissionListProps> = ({
   if (missions.length === 0) {
     return (
       <div className="text-center py-16">
-        <div className="text-6xl mb-4">📋</div>
-        <div className="text-2xl font-header text-gray-400 uppercase tracking-wide">
+        <div className="text-accent-primary text-4xl mb-4">▲</div>
+        <div className="text-sm font-mono text-text-muted uppercase tracking-wider">
           {emptyMessage}
         </div>
       </div>
@@ -35,7 +35,7 @@ export const MissionList: FC<MissionListProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {missions.map((mission) => (
         <MissionCard key={mission.id} mission={mission} />
       ))}

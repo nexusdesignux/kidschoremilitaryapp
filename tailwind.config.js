@@ -7,37 +7,66 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Military theme colors
-        navy: {
-          DEFAULT: '#1a2332',
-          light: '#2a3442',
-          dark: '#0a1322',
+        // Core backgrounds
+        bg: {
+          primary: '#000000',
+          secondary: '#0a0a0a',
+          tertiary: '#1a1a1a',
         },
-        tactical: {
-          DEFAULT: '#3d8b40',
-          light: '#52b556',
-          dark: '#2d6b30',
+        // Borders
+        border: {
+          primary: '#333333',
+          active: '#00ff88',
+          subtle: '#222222',
         },
-        gold: {
-          DEFAULT: '#ffc107',
-          light: '#ffeb3b',
-          dark: '#ff9800',
+        // Text colors
+        text: {
+          primary: '#ffffff',
+          secondary: '#999999',
+          muted: '#666666',
         },
-        mission: {
-          orange: '#ff6b35',
-          blue: '#4a90e2',
-          green: '#4caf50',
-          red: '#ff5252',
+        // Accent colors
+        accent: {
+          primary: '#00ff88',    // Neon green
+          secondary: '#ffcc00',  // Gold
+          danger: '#ff3b3b',     // Red
+          info: '#00d4ff',       // Cyan
+        },
+        // Status colors
+        status: {
+          ready: '#00ff88',
+          active: '#00d4ff',
+          verification: '#ffcc00',
+          complete: '#00ff88',
+          overdue: '#ff3b3b',
+        },
+        // Difficulty colors
+        difficulty: {
+          easy: '#00ff88',
+          medium: '#ffcc00',
+          hard: '#ff3b3b',
         },
       },
       fontFamily: {
-        header: ['Bangers', 'Bebas Neue', 'cursive'],
-        bebas: ['Bebas Neue', 'cursive'],
-        body: ['Inter', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Courier New', 'monospace'],
+        sans: ['Inter', 'Roboto', 'sans-serif'],
       },
-      animation: {
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'bounce-slow': 'bounce 2s infinite',
+      fontSize: {
+        'xs': '11px',
+        'sm': '13px',
+        'base': '15px',
+        'lg': '18px',
+        'xl': '24px',
+        '2xl': '32px',
+        '3xl': '48px',
+      },
+      borderRadius: {
+        'none': '0px',
+      },
+      boxShadow: {
+        'glow-green': '0 0 20px rgba(0, 255, 136, 0.5)',
+        'glow-gold': '0 0 10px rgba(255, 204, 0, 0.5)',
+        'glow-modal': '0 20px 60px rgba(0, 255, 136, 0.2)',
       },
     },
   },

@@ -14,20 +14,20 @@ export const RankBadge: FC<RankBadgeProps> = ({ points, showProgress = false, si
   const progress = getProgressToNextRank(points)
 
   const sizeStyles = {
-    sm: 'text-4xl',
-    md: 'text-6xl',
-    lg: 'text-8xl',
+    sm: 'text-2xl',
+    md: 'text-3xl',
+    lg: 'text-5xl',
   }
 
   return (
     <div className="text-center">
-      <div className={`mb-4 ${sizeStyles[size]}`}>{currentRank.icon}</div>
+      <div className={`mb-3 ${sizeStyles[size]}`}>{currentRank.icon}</div>
       <div className="mb-2">
-        <div className="text-2xl font-header text-gold uppercase tracking-wide">
+        <div className="text-lg font-mono font-bold text-accent-secondary uppercase tracking-wide">
           {currentRank.name}
         </div>
-        <div className="text-sm text-gray-400">
-          {points} / {nextRank ? nextRank.minPoints : '∞'} Points
+        <div className="text-xs font-mono text-text-muted">
+          {points} / {nextRank ? nextRank.minPoints : '∞'} POINTS
         </div>
       </div>
 
@@ -35,11 +35,12 @@ export const RankBadge: FC<RankBadgeProps> = ({ points, showProgress = false, si
         <div className="mt-4">
           <ProgressBar
             progress={progress}
-            label={`Next Rank: ${nextRank.name}`}
-            color="gold"
+            label={`NEXT RANK: ${nextRank.name}`}
+            variant="gold"
+            size="md"
           />
-          <div className="mt-2 text-sm text-gray-400">
-            {nextRank.minPoints - points} points to go!
+          <div className="mt-2 text-xs font-mono text-text-muted">
+            {nextRank.minPoints - points} points to go
           </div>
         </div>
       )}

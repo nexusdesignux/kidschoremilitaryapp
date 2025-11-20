@@ -1,12 +1,10 @@
 import { FC } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
-import { classNames } from '../../utils/helpers'
 
 interface NavItem {
   to: string
   label: string
-  icon: string
   roles?: string[]
 }
 
@@ -15,50 +13,89 @@ export const Sidebar: FC = () => {
 
   if (!user) return null
 
-  const navItems: NavItem[] = [
-    { to: '/command-center', label: 'COMMAND CENTER', icon: '🎯' },
-    { to: '/rewards', label: 'REWARDS', icon: '🏆' },
-    { to: `/agent/${user.id}`, label: 'MY PROFILE', icon: '👤' },
-    { to: '/settings', label: 'SETTINGS', icon: '⚙️', roles: ['commander', 'lieutenant'] },
+  const mainNavItems: NavItem[] = [
+    { to: '/command-center', label: 'COMMAND CENTER' },
+    { to: '/rewards', label: 'REWARDS' },
+    { to: `/agent/${user.id}`, label: 'MY PROFILE' },
   ]
 
-  const filteredNavItems = navItems.filter(
+  const systemNavItems: NavItem[] = [
+    { to: '/settings', label: 'SETTINGS', roles: ['commander', 'lieutenant'] },
+  ]
+
+  const filteredSystemItems = systemNavItems.filter(
     item => !item.roles || item.roles.includes(user.role)
   )
 
   return (
-    <aside className="bg-navy-dark border-r-2 border-tactical w-64 min-h-screen p-6">
-      <nav className="space-y-2">
-        {filteredNavItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              classNames(
-                'flex items-center space-x-3 px-4 py-3 rounded-lg transition-all font-bold uppercase tracking-wide text-sm',
-                isActive
-                  ? 'bg-tactical text-white shadow-lg'
-                  : 'text-gray-400 hover:text-white hover:bg-navy-light'
-              )
-            }
-          >
-            <span className="text-2xl">{item.icon}</span>
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
-      </nav>
+    <aside className="bg-bg-primary border-r border-border-primary w-60 min-h-[calc(100vh-60px)] p-5">
+      {/* Navigation Section */}
+      <div className="mb-6">
+        <div className="text-xs font-mono text-text-muted uppercase tracking-wider mb-3 px-3">
+          NAVIGATION
+        </div>
+        <nav className="space-y-1">
+          {mainNavItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `block px-3 py-2 text-sm font-mono transition-all duration-200 ${
+                  isActive
+                    ? 'text-white bg-bg-tertiary border-l-[3px] border-accent-primary'
+                    : 'text-text-secondary hover:text-white hover:border-l-[3px] hover:border-accent-primary'
+                }`
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+      </div>
 
-      {/* Quick Stats */}
-      <div className="mt-8 p-4 bg-navy-light rounded-lg border border-tactical">
-        <h3 className="text-xs uppercase tracking-wide text-gray-400 mb-3">QUICK STATS</h3>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-400">Total Points:</span>
-            <span className="font-bold text-gold">{user.rank_points}</span>
+      {/* System Section */}
+      {filteredSystemItems.length > 0 && (
+        <div className="mb-6">
+          <div className="text-xs font-mono text-text-muted uppercase tracking-wider mb-3 px-3">
+            SYSTEM
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Current Rank:</span>
-            <span className="font-bold text-tactical-light">{user.current_rank}</span>
+          <nav className="space-y-1">
+            {filteredSystemItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `block px-3 py-2 text-sm font-mono transition-all duration-200 ${
+                    isActive
+                      ? 'text-white bg-bg-tertiary border-l-[3px] border-accent-primary'
+                      : 'text-text-secondary hover:text-white hover:border-l-[3px] hover:border-accent-primary'
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+      )}
+
+      {/* Status Panel */}
+      <div className="mt-8">
+        <div className="text-xs font-mono text-text-muted uppercase tracking-wider mb-3 px-3">
+          CURRENT STATUS
+        </div>
+        <div className="bg-bg-secondary border border-border-primary p-4 space-y-2">
+          <div className="flex justify-between text-xs font-mono">
+            <span className="text-text-muted">Active:</span>
+            <span className="text-white font-bold">3</span>
+          </div>
+          <div className="flex justify-between text-xs font-mono">
+            <span className="text-text-muted">Streak:</span>
+            <span className="text-accent-secondary font-bold">5 DAYS</span>
+          </div>
+          <div className="flex justify-between text-xs font-mono">
+            <span className="text-text-muted">Rank:</span>
+            <span className="text-accent-primary font-bold">{user.current_rank}</span>
           </div>
         </div>
       </div>

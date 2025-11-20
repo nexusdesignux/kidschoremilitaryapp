@@ -4,75 +4,200 @@
 
 @layer base {
   body {
-    @apply bg-navy text-white font-body;
+    @apply bg-bg-primary text-text-primary font-mono;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-header tracking-wide;
+    @apply font-mono tracking-wide uppercase;
+  }
+
+  * {
+    @apply border-border-primary;
   }
 }
 
 @layer components {
+  /* Mission Card */
   .mission-card {
-    @apply bg-navy-light border-2 border-tactical rounded-lg p-4 shadow-lg transition-all hover:shadow-xl hover:border-tactical-light;
+    @apply bg-bg-secondary border border-border-primary p-5 mb-4 transition-colors duration-200;
   }
 
+  .mission-card:hover {
+    @apply border-accent-primary;
+  }
+
+  /* Primary Button */
   .btn-primary {
-    @apply bg-tactical hover:bg-tactical-light text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 active:scale-95 uppercase tracking-wide;
+    @apply bg-accent-primary text-black font-bold py-3 px-6 uppercase tracking-wide font-mono transition-all duration-200;
   }
 
+  .btn-primary:hover {
+    @apply shadow-glow-green;
+  }
+
+  .btn-primary:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* Secondary Button */
   .btn-secondary {
-    @apply bg-navy-light hover:bg-navy text-white font-bold py-3 px-6 rounded-lg border-2 border-tactical transition-all uppercase tracking-wide;
+    @apply bg-transparent text-white font-bold py-3 px-6 border border-border-primary uppercase tracking-wide font-mono transition-all duration-200;
   }
 
+  .btn-secondary:hover {
+    @apply border-accent-primary text-accent-primary;
+  }
+
+  /* Danger Button */
+  .btn-danger {
+    @apply bg-accent-danger text-white font-bold py-3 px-6 uppercase tracking-wide font-mono transition-all duration-200;
+  }
+
+  .btn-danger:hover {
+    @apply bg-red-500;
+  }
+
+  /* Gold Button */
   .btn-gold {
-    @apply bg-gold hover:bg-gold-light text-navy font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 active:scale-95 uppercase tracking-wide shadow-lg;
+    @apply bg-accent-secondary text-black font-bold py-3 px-6 uppercase tracking-wide font-mono transition-all duration-200;
   }
 
+  .btn-gold:hover {
+    @apply shadow-glow-gold;
+  }
+
+  /* Badges */
   .badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wide;
+    @apply inline-flex items-center px-2 py-1 text-xs font-bold uppercase tracking-wide rounded;
   }
 
-  .badge-success {
-    @apply badge bg-mission-green text-white;
+  .badge-ready {
+    @apply badge bg-status-ready text-black;
   }
 
-  .badge-warning {
-    @apply badge bg-gold text-navy;
+  .badge-active {
+    @apply badge bg-status-active text-black;
   }
 
-  .badge-danger {
-    @apply badge bg-mission-red text-white;
+  .badge-verification {
+    @apply badge bg-status-verification text-black;
   }
 
-  .badge-info {
-    @apply badge bg-mission-blue text-white;
+  .badge-complete {
+    @apply badge bg-status-complete text-black;
   }
 
+  .badge-overdue {
+    @apply badge bg-status-overdue text-white;
+  }
+
+  .badge-easy {
+    @apply badge bg-difficulty-easy text-black;
+  }
+
+  .badge-medium {
+    @apply badge bg-difficulty-medium text-black;
+  }
+
+  .badge-hard {
+    @apply badge bg-difficulty-hard text-white;
+  }
+
+  /* Progress Bar */
   .progress-bar {
-    @apply w-full bg-navy-dark rounded-full h-4 overflow-hidden;
+    @apply w-full bg-border-subtle h-2 overflow-hidden;
   }
 
   .progress-fill {
-    @apply h-full bg-gradient-to-r from-tactical to-tactical-light transition-all duration-500 ease-out;
+    @apply h-full bg-white transition-all duration-300 ease-out;
+  }
+
+  .progress-fill-gradient {
+    @apply h-full bg-gradient-to-r from-accent-primary to-accent-info transition-all duration-300 ease-out;
+  }
+
+  /* Input Fields */
+  .input-field {
+    @apply w-full bg-bg-secondary border border-border-primary text-white py-3 px-4 font-mono transition-all duration-200;
+  }
+
+  .input-field:focus {
+    @apply border-accent-primary outline-none;
+    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+  }
+
+  .input-field::placeholder {
+    @apply text-text-muted;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-bg-secondary border border-border-primary p-6 transition-colors duration-200;
+  }
+
+  .card-hover:hover {
+    @apply border-accent-primary cursor-pointer;
+  }
+
+  /* Stat Card */
+  .stat-card {
+    @apply bg-bg-secondary border border-border-primary p-6 text-center transition-colors duration-200;
+  }
+
+  .stat-card:hover {
+    @apply border-accent-primary;
   }
 }
 
-/* Custom animations */
-@keyframes mission-complete {
-  0% {
-    transform: scale(0.5) rotate(-10deg);
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333333;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444444;
+}
+
+/* Selection */
+::selection {
+  background: rgba(0, 255, 136, 0.3);
+  color: #ffffff;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
     opacity: 0;
   }
-  50% {
-    transform: scale(1.2) rotate(5deg);
-  }
-  100% {
-    transform: scale(1) rotate(0deg);
+  to {
     opacity: 1;
   }
 }
 
-.animate-mission-complete {
-  animation: mission-complete 0.6s ease-out;
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease;
 }

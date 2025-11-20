@@ -1,9 +1,8 @@
 import { FC } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { MISSION_CATEGORIES, DIFFICULTY, MISSION_STATUS } from '../../utils/constants'
-import { formatDate, formatTimeAgo, isMissionOverdue } from '../../utils/helpers'
+import { formatDate, isMissionOverdue } from '../../utils/helpers'
 
 interface Mission {
   id: string
@@ -31,88 +30,95 @@ export const MissionCard: FC<MissionCardProps> = ({ mission }) => {
 
   const isOverdue = mission.due_date && isMissionOverdue(mission.due_date)
 
-  return (
-    <Card hover onClick={() => navigate(`/mission/${mission.id}`)}>
-      <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center space-x-2 mb-2">
-              <span className="text-2xl">{category.icon}</span>
-              <h3 className="text-xl font-header uppercase text-white">
-                {mission.title}
-              </h3>
-            </div>
-            <p className="text-sm text-gray-400 uppercase tracking-wide">
-              {category.label}
-            </p>
-          </div>
+  // Map status to badge variant
+  const getStatusVariant = () => {
+    if (isOverdue) return 'overdue'
+    switch (mission.status) {
+      case 'completed': return 'complete'
+      case 'verified': return 'complete'
+      case 'in_progress': return 'active'
+      case 'pending': return 'ready'
+      default: return 'ready'
+    }
+  }
 
-          {/* Status Badge */}
-          <Badge
-            variant={
-              isOverdue ? 'danger' :
-              mission.status === 'completed' ? 'success' :
-              mission.status === 'in_progress' ? 'info' :
-              'default'
-            }
-          >
-            {status.icon} {status.label}
+  // Map difficulty to badge variant
+  const getDifficultyVariant = () => {
+    switch (mission.difficulty) {
+      case 'easy': return 'easy'
+      case 'medium': return 'medium'
+      case 'hard': return 'hard'
+      default: return 'easy'
+    }
+  }
+
+  return (
+    <div
+      className="bg-bg-secondary border border-border-primary p-5 cursor-pointer hover:border-accent-primary transition-colors duration-200"
+      onClick={() => navigate(`/mission/${mission.id}`)}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className="text-base font-mono font-bold uppercase text-white tracking-wide mb-1">
+            {mission.title}
+          </h3>
+          <p className="text-xs font-mono text-text-muted uppercase">
+            {category.label}
+          </p>
+        </div>
+        <div className="flex gap-2 ml-4">
+          <Badge variant={getStatusVariant()}>
+            {status.label}
           </Badge>
         </div>
+      </div>
 
-        {/* Description */}
-        {mission.description && (
-          <p className="text-gray-300 text-sm">{mission.description}</p>
-        )}
+      {/* Description */}
+      {mission.description && (
+        <p className="text-sm font-mono text-text-secondary mb-4 line-clamp-2">
+          {mission.description}
+        </p>
+      )}
 
-        {/* Details */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-700">
-          <div className="flex items-center space-x-4">
-            {/* Difficulty */}
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-400 uppercase">Difficulty:</span>
-              <Badge variant={difficulty.id === 'easy' ? 'success' : difficulty.id === 'medium' ? 'warning' : 'danger'} size="sm">
-                {difficulty.label}
-              </Badge>
-            </div>
+      {/* Details */}
+      <div className="flex items-center justify-between pt-4 border-t border-border-subtle">
+        <div className="flex items-center gap-4">
+          {/* Difficulty */}
+          <Badge variant={getDifficultyVariant()} size="sm">
+            {difficulty.label}
+          </Badge>
 
-            {/* Points */}
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-400 uppercase">Points:</span>
-              <span className="font-bold text-gold">+{mission.rank_points}</span>
-            </div>
-          </div>
-
-          {/* Due Date */}
-          {mission.due_date && (
-            <div className="text-right">
-              <div className="text-xs text-gray-400 uppercase">Due</div>
-              <div className={`text-sm font-bold ${isOverdue ? 'text-mission-red' : 'text-white'}`}>
-                {formatDate(mission.due_date)}
-              </div>
-              <div className="text-xs text-gray-500">
-                {formatTimeAgo(mission.due_date)}
-              </div>
-            </div>
-          )}
+          {/* Points */}
+          <span className="text-sm font-mono font-bold text-accent-secondary">
+            +{mission.rank_points}
+          </span>
         </div>
 
-        {/* Assigned Agent */}
-        {mission.assignedAgent && (
-          <div className="flex items-center space-x-2 pt-2 border-t border-gray-700">
-            <span className="text-xs text-gray-400 uppercase">Assigned to:</span>
-            <div className="flex items-center space-x-2">
-              <img
-                src={mission.assignedAgent.avatar_url || `https://api.dicebear.com/7.x/adventurer/svg?seed=${mission.assignedAgent.full_name}`}
-                alt={mission.assignedAgent.full_name}
-                className="w-6 h-6 rounded-full border border-tactical"
-              />
-              <span className="text-sm font-bold text-white">{mission.assignedAgent.full_name}</span>
+        {/* Due Date */}
+        {mission.due_date && (
+          <div className="text-right">
+            <div className={`text-xs font-mono font-bold ${isOverdue ? 'text-accent-danger' : 'text-white'}`}>
+              {formatDate(mission.due_date)}
             </div>
           </div>
         )}
       </div>
-    </Card>
+
+      {/* Assigned Agent */}
+      {mission.assignedAgent && (
+        <div className="flex items-center gap-2 pt-3 mt-3 border-t border-border-subtle">
+          <span className="text-xs font-mono text-text-muted uppercase">Assigned:</span>
+          <div className="flex items-center gap-2">
+            <img
+              src={mission.assignedAgent.avatar_url || `https://api.dicebear.com/7.x/adventurer/svg?seed=${mission.assignedAgent.full_name}`}
+              alt={mission.assignedAgent.full_name}
+              className="w-5 h-5 rounded-full border border-accent-primary"
+            />
+            <span className="text-xs font-mono text-white">{mission.assignedAgent.full_name}</span>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

@@ -4,37 +4,46 @@ interface ProgressBarProps {
   progress: number // 0-100
   label?: string
   showPercentage?: boolean
-  color?: 'tactical' | 'gold' | 'blue' | 'red'
+  variant?: 'default' | 'gradient' | 'gold'
+  size?: 'sm' | 'md' | 'lg'
 }
 
 export const ProgressBar: FC<ProgressBarProps> = ({
   progress,
   label,
   showPercentage = true,
-  color = 'tactical',
+  variant = 'default',
+  size = 'md',
 }) => {
   const clampedProgress = Math.min(100, Math.max(0, progress))
 
-  const colorStyles = {
-    tactical: 'from-tactical to-tactical-light',
-    gold: 'from-gold to-gold-light',
-    blue: 'from-mission-blue to-blue-400',
-    red: 'from-mission-red to-red-400',
+  const fillStyles = {
+    default: 'bg-white',
+    gradient: 'bg-gradient-to-r from-accent-primary to-accent-info',
+    gold: 'bg-accent-secondary shadow-glow-gold',
+  }
+
+  const sizeStyles = {
+    sm: 'h-1',
+    md: 'h-2',
+    lg: 'h-3',
   }
 
   return (
     <div className="w-full">
-      {label && (
+      {(label || showPercentage) && (
         <div className="flex justify-between mb-2">
-          <span className="text-sm font-bold uppercase text-gray-300">{label}</span>
+          {label && (
+            <span className="text-xs font-bold uppercase text-text-secondary font-mono">{label}</span>
+          )}
           {showPercentage && (
-            <span className="text-sm font-bold text-gold">{Math.round(clampedProgress)}%</span>
+            <span className="text-xs font-bold text-accent-secondary font-mono">{Math.round(clampedProgress)}%</span>
           )}
         </div>
       )}
-      <div className="progress-bar">
+      <div className={`w-full bg-border-subtle overflow-hidden ${sizeStyles[size]}`}>
         <div
-          className={`progress-fill bg-gradient-to-r ${colorStyles[color]}`}
+          className={`h-full transition-all duration-300 ease-out ${fillStyles[variant]}`}
           style={{ width: `${clampedProgress}%` }}
         />
       </div>
