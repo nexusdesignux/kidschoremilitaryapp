@@ -25,11 +25,13 @@ export function generateAgentCode(): string {
   return `AGENT-${randomNumber}`
 }
 
+// Generate military-style avatar with initials on geometric background
 export function getAvatarUrl(agentId: string, seed?: string): string {
-  // Using DiceBear API for fun avatar generation
-  const style = 'adventurer' // Kid-friendly avatar style
   const actualSeed = seed || agentId
-  return `https://api.dicebear.com/7.x/${style}/svg?seed=${actualSeed}`
+  // Use UI Avatars with military-style settings (sharp corners, monospace font)
+  const initials = actualSeed.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AG'
+  // Military green background with white text
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=1a1a1a&color=00ff88&bold=true&format=svg&size=128`
 }
 
 export function truncate(str: string, maxLength: number): string {

@@ -24,9 +24,9 @@ export const AgentProfile: FC = () => {
         <div className="bg-bg-secondary border border-border-primary p-6 lg:col-span-1">
           <div className="text-center space-y-4">
             <img
-              src={user.avatar_url || `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.agent_code}`}
+              src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=1a1a1a&color=00ff88&bold=true&format=svg&size=128`}
               alt={user.full_name}
-              className="w-24 h-24 rounded-full border-2 border-accent-primary mx-auto"
+              className="w-24 h-24 border-2 border-accent-primary mx-auto"
             />
             <div>
               <h2 className="text-lg font-mono font-bold text-white uppercase">{user.full_name}</h2>

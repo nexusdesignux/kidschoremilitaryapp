@@ -111,9 +111,9 @@ export const MissionCard: FC<MissionCardProps> = ({ mission }) => {
           <span className="text-xs font-mono text-text-muted uppercase">Assigned:</span>
           <div className="flex items-center gap-2">
             <img
-              src={mission.assignedAgent.avatar_url || `https://api.dicebear.com/7.x/adventurer/svg?seed=${mission.assignedAgent.full_name}`}
+              src={mission.assignedAgent.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(mission.assignedAgent.full_name)}&background=1a1a1a&color=00ff88&bold=true&format=svg&size=128`}
               alt={mission.assignedAgent.full_name}
-              className="w-5 h-5 rounded-full border border-accent-primary"
+              className="w-5 h-5 border border-accent-primary"
             />
             <span className="text-xs font-mono text-white">{mission.assignedAgent.full_name}</span>
           </div>

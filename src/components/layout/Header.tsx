@@ -42,9 +42,9 @@ export const Header: FC = () => {
           {/* User */}
           <Link to={`/agent/${user.id}`} className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
             <img
-              src={user.avatar_url || `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.agent_code}`}
+              src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=1a1a1a&color=00ff88&bold=true&format=svg&size=128`}
               alt={user.full_name}
-              className="w-8 h-8 rounded-full border-2 border-accent-primary"
+              className="w-8 h-8 border-2 border-accent-primary"
             />
             <div className="text-sm font-mono">
               <div className="font-bold text-white">{user.full_name}</div>

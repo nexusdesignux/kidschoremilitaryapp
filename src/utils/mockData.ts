@@ -207,7 +207,7 @@ export const DEMO_ACHIEVEMENTS = [
     badge_type: 'first_mission',
     earned_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
     badge_name: 'First Mission',
-    badge_icon: '🥇',
+    badge_icon: '▲',
   },
   {
     id: 'achievement-2',
@@ -215,7 +215,7 @@ export const DEMO_ACHIEVEMENTS = [
     badge_type: 'week_warrior',
     earned_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     badge_name: 'Week Warrior',
-    badge_icon: '🔥',
+    badge_icon: '◆',
   },
   {
     id: 'achievement-3',
@@ -223,7 +223,7 @@ export const DEMO_ACHIEVEMENTS = [
     badge_type: 'first_mission',
     earned_at: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
     badge_name: 'First Mission',
-    badge_icon: '🥇',
+    badge_icon: '▲',
   },
   {
     id: 'achievement-4',
@@ -231,7 +231,7 @@ export const DEMO_ACHIEVEMENTS = [
     badge_type: 'century_club',
     earned_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
     badge_name: 'Century Club',
-    badge_icon: '💯',
+    badge_icon: '■',
   },
 ]
 
