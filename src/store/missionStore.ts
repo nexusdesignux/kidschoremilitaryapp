@@ -44,6 +44,7 @@ interface MissionState {
   setMissions: (missions: Mission[]) => void
   addMission: (mission: MissionFormData, userId: string, familyId: string, demoMode: boolean) => Promise<void>
   updateMissionStatus: (missionId: string, status: string, demoMode: boolean) => Promise<void>
+  deleteMission: (missionId: string, demoMode: boolean) => Promise<void>
   loadMissions: (userId: string, familyId: string, role: string, demoMode: boolean) => Promise<void>
 }
 
@@ -221,6 +222,30 @@ export const useMissionStore = create<MissionState>()(
           set({ missions: updatedMissions })
         } catch (error) {
           console.error('Error updating mission:', error)
+          throw error
+        }
+      },
+
+      deleteMission: async (missionId: string, demoMode: boolean) => {
+        try {
+          if (demoMode) {
+            const currentMissions = get().missions
+            set({ missions: currentMissions.filter(m => m.id !== missionId) })
+            return
+          }
+
+          // Real Supabase delete
+          const { error } = await supabase
+            .from('missions')
+            .delete()
+            .eq('id', missionId)
+
+          if (error) throw error
+
+          const currentMissions = get().missions
+          set({ missions: currentMissions.filter(m => m.id !== missionId) })
+        } catch (error) {
+          console.error('Error deleting mission:', error)
           throw error
         }
       },

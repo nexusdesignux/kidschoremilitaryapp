@@ -11,8 +11,9 @@ export const MissionBriefing: FC = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user, demoMode } = useAuthStore()
-  const { missions, updateMissionStatus } = useMissionStore()
+  const { missions, updateMissionStatus, deleteMission } = useMissionStore()
   const [loading, setLoading] = useState(false)
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false)
 
   // Find mission by ID
   const mission = missions.find(m => m.id === id)
@@ -120,6 +121,22 @@ export const MissionBriefing: FC = () => {
       alert('Failed to reject mission. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Handle close/delete mission (commander only)
+  const handleCloseMission = async () => {
+    if (!mission) return
+    setLoading(true)
+    try {
+      await deleteMission(mission.id, demoMode)
+      navigate('/command-center')
+    } catch (error) {
+      console.error('Error closing mission:', error)
+      alert('Failed to close mission. Please try again.')
+    } finally {
+      setLoading(false)
+      setShowCloseConfirm(false)
     }
   }
 
@@ -284,6 +301,45 @@ export const MissionBriefing: FC = () => {
                 {(mission.status === 'completed' || mission.status === 'verified') && (
                   <div className="text-sm font-mono text-accent-primary uppercase">
                     Mission verified and complete
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Close Mission button for commanders */}
+            {isCommander && (
+              <div className="mt-6 pt-4 border-t border-border-primary">
+                {!showCloseConfirm ? (
+                  <Button
+                    variant="danger"
+                    fullWidth
+                    onClick={() => setShowCloseConfirm(true)}
+                  >
+                    CLOSE MISSION
+                  </Button>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="text-sm font-mono text-accent-danger uppercase text-center">
+                      Are you sure you want to close this mission? This action cannot be undone.
+                    </div>
+                    <div className="flex gap-4">
+                      <Button
+                        variant="secondary"
+                        fullWidth
+                        onClick={() => setShowCloseConfirm(false)}
+                        disabled={loading}
+                      >
+                        CANCEL
+                      </Button>
+                      <Button
+                        variant="danger"
+                        fullWidth
+                        onClick={handleCloseMission}
+                        disabled={loading}
+                      >
+                        {loading ? 'CLOSING...' : 'CONFIRM CLOSE'}
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
