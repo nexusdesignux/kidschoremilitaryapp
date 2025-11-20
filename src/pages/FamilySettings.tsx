@@ -16,6 +16,7 @@ export const FamilySettings: FC = () => {
   const { user, family, demoMode } = useAuthStore()
   const [showAddAgentModal, setShowAddAgentModal] = useState(false)
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
+  const [showUnsubscribeConfirm, setShowUnsubscribeConfirm] = useState(false)
   const [agentForm, setAgentForm] = useState<AgentFormData>({
     full_name: '',
     date_of_birth: '',
@@ -60,6 +61,14 @@ export const FamilySettings: FC = () => {
 
   const handleManageSubscription = () => {
     setShowSubscriptionModal(true)
+  }
+
+  const handleUnsubscribe = () => {
+    // In demo mode, just show a message
+    // In production, this would call Stripe to cancel subscription
+    alert('Subscription cancelled. Your access will continue until the end of your current billing period. (Demo mode - not persisted)')
+    setShowUnsubscribeConfirm(false)
+    setShowSubscriptionModal(false)
   }
 
   return (
@@ -231,7 +240,10 @@ export const FamilySettings: FC = () => {
       {/* Subscription Management Modal */}
       <Modal
         isOpen={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
+        onClose={() => {
+          setShowSubscriptionModal(false)
+          setShowUnsubscribeConfirm(false)
+        }}
         title="SUBSCRIPTION MANAGEMENT"
         size="md"
       >
@@ -258,25 +270,62 @@ export const FamilySettings: FC = () => {
             </div>
           </div>
 
-          <div className="border-t border-border-primary pt-4">
-            <p className="text-xs font-mono text-text-muted mb-4">
-              Stripe integration is not configured in demo mode. In production, you would be able to:
-            </p>
-            <ul className="text-xs font-mono text-text-muted space-y-1 list-disc list-inside">
-              <li>Update payment method</li>
-              <li>View billing history</li>
-              <li>Cancel subscription</li>
-              <li>Upgrade to annual plan</li>
-            </ul>
-          </div>
+          {!showUnsubscribeConfirm ? (
+            <>
+              <div className="border-t border-border-primary pt-4">
+                <p className="text-xs font-mono text-text-muted mb-4">
+                  Manage your subscription settings below.
+                </p>
+              </div>
 
-          <Button
-            variant="secondary"
-            fullWidth
-            onClick={() => setShowSubscriptionModal(false)}
-          >
-            CLOSE
-          </Button>
+              <div className="space-y-3">
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => setShowSubscriptionModal(false)}
+                >
+                  CLOSE
+                </Button>
+                <Button
+                  variant="danger"
+                  fullWidth
+                  onClick={() => setShowUnsubscribeConfirm(true)}
+                >
+                  CANCEL SUBSCRIPTION
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="border-t border-border-primary pt-4">
+                <div className="bg-bg-tertiary border border-accent-danger p-4 mb-4">
+                  <div className="text-sm font-mono text-accent-danger uppercase mb-2">
+                    WARNING: CANCEL SUBSCRIPTION
+                  </div>
+                  <p className="text-xs font-mono text-text-muted">
+                    Are you sure you want to cancel your subscription? Your access will continue until the end of your current billing period, after which you will lose access to Mission Command features.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => setShowUnsubscribeConfirm(false)}
+                >
+                  KEEP SUBSCRIPTION
+                </Button>
+                <Button
+                  variant="danger"
+                  fullWidth
+                  onClick={handleUnsubscribe}
+                >
+                  CONFIRM CANCEL
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
     </div>
