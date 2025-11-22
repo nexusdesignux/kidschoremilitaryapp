@@ -11,6 +11,13 @@ import { getAvatarUrl, generateAgentCode } from '../utils/helpers'
 interface AgentFormData {
   full_name: string
   date_of_birth: string
+  pin: string
+}
+
+interface CreatedAgent {
+  name: string
+  agent_code: string
+  pin: string
 }
 
 export const FamilySettings: FC = () => {
@@ -18,9 +25,12 @@ export const FamilySettings: FC = () => {
   const [showAddAgentModal, setShowAddAgentModal] = useState(false)
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
   const [showUnsubscribeConfirm, setShowUnsubscribeConfirm] = useState(false)
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false)
+  const [createdAgent, setCreatedAgent] = useState<CreatedAgent | null>(null)
   const [agentForm, setAgentForm] = useState<AgentFormData>({
     full_name: '',
     date_of_birth: '',
+    pin: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -46,17 +56,32 @@ export const FamilySettings: FC = () => {
     if (!agentForm.full_name.trim()) {
       newErrors.full_name = 'Agent name is required'
     }
+    if (!agentForm.pin.trim()) {
+      newErrors.pin = 'PIN is required'
+    } else if (agentForm.pin.length < 4 || agentForm.pin.length > 6) {
+      newErrors.pin = 'PIN must be 4-6 digits'
+    } else if (!/^\d+$/.test(agentForm.pin)) {
+      newErrors.pin = 'PIN must contain only numbers'
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       return
     }
 
-    // In demo mode, just show a success message
+    // Generate agent code
+    const agentCode = generateAgentCode()
+
+    // In demo mode, just show credentials
     // In production, this would call Supabase to create the agent
-    alert(`Agent "${agentForm.full_name}" has been added to your squadron! (Demo mode - not persisted)`)
+    setCreatedAgent({
+      name: agentForm.full_name,
+      agent_code: agentCode,
+      pin: agentForm.pin,
+    })
     setShowAddAgentModal(false)
-    setAgentForm({ full_name: '', date_of_birth: '' })
+    setShowCredentialsModal(true)
+    setAgentForm({ full_name: '', date_of_birth: '', pin: '' })
     setErrors({})
   }
 
@@ -185,7 +210,7 @@ export const FamilySettings: FC = () => {
         isOpen={showAddAgentModal}
         onClose={() => {
           setShowAddAgentModal(false)
-          setAgentForm({ full_name: '', date_of_birth: '' })
+          setAgentForm({ full_name: '', date_of_birth: '', pin: '' })
           setErrors({})
         }}
         title="ADD NEW AGENT"
@@ -201,6 +226,15 @@ export const FamilySettings: FC = () => {
           />
 
           <Input
+            label="Agent PIN"
+            placeholder="1234"
+            value={agentForm.pin}
+            onChange={(e) => setAgentForm(prev => ({ ...prev, pin: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
+            error={errors.pin}
+            helperText="4-6 digit code for agent login"
+          />
+
+          <Input
             label="Date of Birth (Optional)"
             type="date"
             value={agentForm.date_of_birth}
@@ -208,20 +242,13 @@ export const FamilySettings: FC = () => {
             helperText="Used for age-appropriate mission suggestions"
           />
 
-          <div className="bg-bg-tertiary border border-border-subtle p-4">
-            <div className="text-xs font-mono text-text-muted uppercase mb-2">Agent Code Preview</div>
-            <div className="text-lg font-mono font-bold text-accent-primary">
-              {generateAgentCode()}
-            </div>
-          </div>
-
           <div className="flex gap-3 pt-4">
             <Button
               variant="secondary"
               fullWidth
               onClick={() => {
                 setShowAddAgentModal(false)
-                setAgentForm({ full_name: '', date_of_birth: '' })
+                setAgentForm({ full_name: '', date_of_birth: '', pin: '' })
                 setErrors({})
               }}
             >
@@ -236,6 +263,67 @@ export const FamilySettings: FC = () => {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Agent Credentials Modal */}
+      <Modal
+        isOpen={showCredentialsModal}
+        onClose={() => {
+          setShowCredentialsModal(false)
+          setCreatedAgent(null)
+        }}
+        title="AGENT ENLISTED"
+        size="md"
+      >
+        {createdAgent && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="text-accent-primary text-4xl mb-4">✓</div>
+              <p className="text-sm font-mono text-text-secondary mb-2">
+                Agent <span className="text-white font-bold">{createdAgent.name}</span> has been successfully enlisted!
+              </p>
+              <p className="text-xs font-mono text-text-muted">
+                Share these credentials with your agent for login access.
+              </p>
+            </div>
+
+            <div className="bg-bg-tertiary border border-accent-primary p-6 space-y-4">
+              <div>
+                <div className="text-xs font-mono text-text-muted uppercase mb-1">Agent Code</div>
+                <div className="text-2xl font-mono font-bold text-accent-primary tracking-wider">
+                  {createdAgent.agent_code}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs font-mono text-text-muted uppercase mb-1">Agent PIN</div>
+                <div className="text-2xl font-mono font-bold text-accent-secondary tracking-wider">
+                  {createdAgent.pin}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-bg-tertiary border border-border-subtle p-4">
+              <div className="text-xs font-mono text-accent-secondary uppercase mb-2">LOGIN INSTRUCTIONS</div>
+              <ol className="text-xs font-mono text-text-muted space-y-1 list-decimal list-inside">
+                <li>Go to the login page</li>
+                <li>Select "Agent Login"</li>
+                <li>Enter the Agent Code and PIN</li>
+                <li>Access granted!</li>
+              </ol>
+            </div>
+
+            <Button
+              variant="gold"
+              fullWidth
+              onClick={() => {
+                setShowCredentialsModal(false)
+                setCreatedAgent(null)
+              }}
+            >
+              MISSION UNDERSTOOD
+            </Button>
+          </div>
+        )}
       </Modal>
 
       {/* Subscription Management Modal */}

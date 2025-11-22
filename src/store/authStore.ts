@@ -39,6 +39,7 @@ interface AuthState {
   setUser: (user: User | null) => void
   setFamily: (family: Family | null) => void
   login: (email: string, password: string) => Promise<void>
+  loginWithAgentCode: (agentCode: string, pin: string) => Promise<void>
   logout: () => Promise<void>
   enlist: (email: string, password: string, familyName: string, commanderName: string) => Promise<void>
   checkAuth: () => Promise<void>
@@ -112,6 +113,33 @@ export const useAuthStore = create<AuthState>()(
             }
           }
         }
+      },
+
+      loginWithAgentCode: async (agentCode: string, pin: string) => {
+        // Demo mode login with agent code + PIN
+        const demoUser = Object.values(DEMO_USERS).find(
+          (u: any) => u.agent_code === agentCode && u.pin === pin
+        )
+
+        if (!demoUser) {
+          throw new Error('Invalid agent code or PIN')
+        }
+
+        const family = DEMO_FAMILIES[(demoUser as any).family_id as keyof typeof DEMO_FAMILIES]
+
+        set({
+          user: demoUser as User,
+          family: family as Family,
+          demoMode: true,
+        })
+
+        // In production, this would query Supabase:
+        // const { data: user } = await supabase
+        //   .from('users')
+        //   .select('*')
+        //   .eq('agent_code', agentCode)
+        //   .eq('pin', pin)
+        //   .single()
       },
 
       logout: async () => {
