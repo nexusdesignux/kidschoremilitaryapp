@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
+import { PRICING } from '../lib/stripe'
 
 export const Enlistment: FC = () => {
   const navigate = useNavigate()
@@ -132,9 +133,10 @@ export const Enlistment: FC = () => {
 
         {/* Features */}
         <div className="mt-6 text-center space-y-2 text-xs text-text-muted font-mono">
-          <p>14-DAY FREE TRIAL</p>
-          <p>UNLIMITED AGENTS</p>
-          <p>GAMIFIED CHORE MANAGEMENT</p>
+          <p className="text-accent-primary font-bold">{PRICING.TRIAL_DAYS}-DAY FREE TRIAL</p>
+          <p>THEN ${PRICING.MONTHLY_PRICE}/MONTH OR ${PRICING.ANNUAL_PRICE}/YEAR</p>
+          <p>UNLIMITED AGENTS & MISSIONS</p>
+          <p>GIFT CARD VAULT INCLUDED</p>
         </div>
       </div>
     </div>

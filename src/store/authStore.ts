@@ -29,6 +29,8 @@ interface Family {
   id: string
   name: string
   subscription_status: string
+  stripe_customer_id?: string
+  trial_ends_at?: string
 }
 
 interface AuthState {
@@ -116,30 +118,56 @@ export const useAuthStore = create<AuthState>()(
       },
 
       loginWithAgentCode: async (agentCode: string, pin: string) => {
-        // Demo mode login with agent code + PIN
-        const demoUser = Object.values(DEMO_USERS).find(
-          (u: any) => u.agent_code === agentCode && u.pin === pin
-        )
+        const state = get()
 
-        if (!demoUser) {
+        // Demo mode login with agent code + PIN
+        if (state.demoMode || agentCode.startsWith('AGENT-')) {
+          const demoUser = Object.values(DEMO_USERS).find(
+            (u: any) => u.agent_code === agentCode && u.pin === pin
+          )
+
+          if (!demoUser) {
+            throw new Error('Invalid agent code or PIN')
+          }
+
+          const family = DEMO_FAMILIES[(demoUser as any).family_id as keyof typeof DEMO_FAMILIES]
+
+          set({
+            user: demoUser as User,
+            family: family as Family,
+            demoMode: true,
+          })
+          return
+        }
+
+        // Real Supabase query for agent login
+        const { data: user, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('agent_code', agentCode)
+          .eq('pin', pin)
+          .single()
+
+        if (error || !user) {
           throw new Error('Invalid agent code or PIN')
         }
 
-        const family = DEMO_FAMILIES[(demoUser as any).family_id as keyof typeof DEMO_FAMILIES]
+        // Fetch family
+        const { data: family } = await supabase
+          .from('families')
+          .select('*')
+          .eq('id', user.family_id)
+          .single()
+
+        if (!family) {
+          throw new Error('Family not found')
+        }
 
         set({
-          user: demoUser as User,
+          user: user as User,
           family: family as Family,
-          demoMode: true,
+          demoMode: false,
         })
-
-        // In production, this would query Supabase:
-        // const { data: user } = await supabase
-        //   .from('users')
-        //   .select('*')
-        //   .eq('agent_code', agentCode)
-        //   .eq('pin', pin)
-        //   .single()
       },
 
       logout: async () => {

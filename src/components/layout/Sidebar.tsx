@@ -77,12 +77,17 @@ export const Sidebar: FC = () => {
   const mainNavItems: NavItem[] = [
     { to: '/command-center', label: 'COMMAND CENTER' },
     { to: '/rewards', label: 'REWARDS' },
+    { to: '/redemption-history', label: 'MY CODES', roles: ['agent'] },
     { to: `/agent/${user.id}`, label: 'MY PROFILE' },
   ]
 
   const systemNavItems: NavItem[] = [
     { to: '/settings', label: 'SETTINGS', roles: ['commander', 'lieutenant'] },
   ]
+
+  const filteredMainItems = mainNavItems.filter(
+    item => !item.roles || item.roles.includes(user.role)
+  )
 
   const filteredSystemItems = systemNavItems.filter(
     item => !item.roles || item.roles.includes(user.role)
@@ -96,7 +101,7 @@ export const Sidebar: FC = () => {
           NAVIGATION
         </div>
         <nav className="space-y-1">
-          {mainNavItems.map((item) => (
+          {filteredMainItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

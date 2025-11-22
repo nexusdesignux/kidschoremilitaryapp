@@ -16,13 +16,14 @@ CREATE TABLE IF NOT EXISTS families (
 
 -- Users/Family Members Table
 CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email TEXT UNIQUE,
   full_name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'agent' CHECK (role IN ('commander', 'lieutenant', 'agent')),
   family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
   avatar_url TEXT,
   agent_code TEXT NOT NULL UNIQUE,
+  pin TEXT, -- 4-6 digit PIN for agent login
   rank_points INTEGER DEFAULT 0,
   current_rank TEXT DEFAULT 'RECRUIT',
   date_of_birth DATE,
@@ -100,6 +101,35 @@ CREATE TABLE IF NOT EXISTS reward_redemptions (
   points_spent INTEGER NOT NULL
 );
 
+-- Reward Vault Table (Parent-loaded gift cards)
+CREATE TABLE IF NOT EXISTS reward_vault (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  brand_name TEXT NOT NULL,
+  denomination INTEGER NOT NULL,
+  gift_code TEXT NOT NULL,
+  points_cost INTEGER NOT NULL,
+  photo_url TEXT,
+  added_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'available' CHECK (status IN ('available', 'redeemed', 'expired')),
+  redeemed_by UUID REFERENCES users(id),
+  redeemed_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  notes TEXT
+);
+
+-- Upload Sessions Table (QR code photo upload system)
+CREATE TABLE IF NOT EXISTS upload_sessions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  photo_url TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'expired')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  used_at TIMESTAMP WITH TIME ZONE
+);
+
 -- Row Level Security (RLS) Policies
 
 -- Enable RLS on all tables
@@ -111,6 +141,8 @@ ALTER TABLE rank_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mission_photos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rewards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reward_redemptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reward_vault ENABLE ROW LEVEL SECURITY;
+ALTER TABLE upload_sessions ENABLE ROW LEVEL SECURITY;
 
 -- Families Policies
 CREATE POLICY "Users can view their own family"
@@ -173,6 +205,36 @@ CREATE POLICY "Users can view their own redemptions"
 CREATE POLICY "Users can redeem rewards"
   ON reward_redemptions FOR INSERT
   WITH CHECK (user_id = auth.uid());
+
+-- Reward Vault Policies
+CREATE POLICY "Users can view vault cards in their family"
+  ON reward_vault FOR SELECT
+  USING (family_id IN (SELECT family_id FROM users WHERE id = auth.uid()));
+
+CREATE POLICY "Commanders can insert vault cards"
+  ON reward_vault FOR INSERT
+  WITH CHECK (family_id IN (SELECT family_id FROM users WHERE id = auth.uid() AND role IN ('commander', 'lieutenant')));
+
+CREATE POLICY "Commanders can update vault cards"
+  ON reward_vault FOR UPDATE
+  USING (family_id IN (SELECT family_id FROM users WHERE id = auth.uid() AND role IN ('commander', 'lieutenant')));
+
+CREATE POLICY "Commanders can delete vault cards"
+  ON reward_vault FOR DELETE
+  USING (family_id IN (SELECT family_id FROM users WHERE id = auth.uid() AND role IN ('commander', 'lieutenant')));
+
+-- Upload Sessions Policies
+CREATE POLICY "Users can view their own upload sessions"
+  ON upload_sessions FOR SELECT
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Users can create upload sessions"
+  ON upload_sessions FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users can update their own upload sessions"
+  ON upload_sessions FOR UPDATE
+  USING (user_id = auth.uid());
 
 -- Gift Cards Table (Tremendous API catalog)
 CREATE TABLE IF NOT EXISTS gift_cards (
@@ -261,3 +323,9 @@ CREATE INDEX idx_gift_cards_category ON gift_cards(category);
 CREATE INDEX idx_gift_cards_is_active ON gift_cards(is_active);
 CREATE INDEX idx_gift_card_redemptions_user_id ON gift_card_redemptions(user_id);
 CREATE INDEX idx_gift_card_redemptions_status ON gift_card_redemptions(status);
+CREATE INDEX idx_reward_vault_family_id ON reward_vault(family_id);
+CREATE INDEX idx_reward_vault_status ON reward_vault(status);
+CREATE INDEX idx_upload_sessions_user_id ON upload_sessions(user_id);
+CREATE INDEX idx_upload_sessions_status ON upload_sessions(status);
+CREATE INDEX idx_users_agent_code ON users(agent_code);
+CREATE INDEX idx_users_pin ON users(pin);

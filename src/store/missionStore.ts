@@ -48,6 +48,68 @@ interface MissionState {
   loadMissions: (userId: string, familyId: string, role: string, demoMode: boolean) => Promise<void>
 }
 
+// Helper to calculate next due date based on recurrence pattern
+const getNextDueDate = (pattern: string, currentDueDate: string | null): string => {
+  const baseDate = currentDueDate ? new Date(currentDueDate) : new Date()
+  const nextDate = new Date(baseDate)
+
+  switch (pattern) {
+    case 'daily':
+      nextDate.setDate(nextDate.getDate() + 1)
+      break
+    case 'weekly_monday':
+      nextDate.setDate(nextDate.getDate() + 7)
+      break
+    case 'weekly_tuesday':
+      nextDate.setDate(nextDate.getDate() + 7)
+      break
+    case 'weekly_wednesday':
+      nextDate.setDate(nextDate.getDate() + 7)
+      break
+    case 'weekly_thursday':
+      nextDate.setDate(nextDate.getDate() + 7)
+      break
+    case 'weekly_friday':
+      nextDate.setDate(nextDate.getDate() + 7)
+      break
+    case 'weekly_saturday':
+      nextDate.setDate(nextDate.getDate() + 7)
+      break
+    case 'weekly_sunday':
+      nextDate.setDate(nextDate.getDate() + 7)
+      break
+    case 'weekly_weekend':
+      // Move to next Saturday if not already weekend
+      const day = nextDate.getDay()
+      if (day === 0) { // Sunday
+        nextDate.setDate(nextDate.getDate() + 6) // Next Saturday
+      } else if (day === 6) { // Saturday
+        nextDate.setDate(nextDate.getDate() + 7) // Next Saturday
+      } else {
+        nextDate.setDate(nextDate.getDate() + (6 - day)) // This Saturday
+      }
+      break
+    case 'weekly_weekday':
+      // Move to next Monday if weekend
+      const weekday = nextDate.getDay()
+      if (weekday === 0) { // Sunday
+        nextDate.setDate(nextDate.getDate() + 1)
+      } else if (weekday === 6) { // Saturday
+        nextDate.setDate(nextDate.getDate() + 2)
+      } else {
+        nextDate.setDate(nextDate.getDate() + 1)
+        // Skip weekend
+        if (nextDate.getDay() === 0) nextDate.setDate(nextDate.getDate() + 1)
+        if (nextDate.getDay() === 6) nextDate.setDate(nextDate.getDate() + 2)
+      }
+      break
+    default:
+      nextDate.setDate(nextDate.getDate() + 7) // Default to weekly
+  }
+
+  return nextDate.toISOString()
+}
+
 export const useMissionStore = create<MissionState>()(
   persist(
     (set, get) => ({
@@ -180,7 +242,9 @@ export const useMissionStore = create<MissionState>()(
         try {
           if (demoMode) {
             const currentMissions = get().missions
-            const updatedMissions = currentMissions.map(m => {
+            const mission = currentMissions.find(m => m.id === missionId)
+
+            let updatedMissions = currentMissions.map(m => {
               if (m.id === missionId) {
                 return {
                   ...m,
@@ -194,6 +258,33 @@ export const useMissionStore = create<MissionState>()(
               }
               return m
             })
+
+            // If mission is recurring and just got verified, create next instance
+            if (status === 'verified' && mission?.recurring && mission.recurrence_pattern) {
+              const nextMission: Mission = {
+                id: `mission-${Date.now()}`,
+                family_id: mission.family_id,
+                title: mission.title,
+                description: mission.description,
+                category: mission.category,
+                difficulty: mission.difficulty,
+                status: 'pending',
+                created_by: mission.created_by,
+                assigned_to: mission.assigned_to,
+                due_date: getNextDueDate(mission.recurrence_pattern, mission.due_date),
+                recurring: true,
+                recurrence_pattern: mission.recurrence_pattern,
+                rank_points: mission.rank_points,
+                field_bonus: mission.field_bonus,
+                is_verified: false,
+                created_at: new Date().toISOString(),
+                completed_at: null,
+                verified_at: null,
+                assignedAgent: mission.assignedAgent,
+              }
+              updatedMissions = [nextMission, ...updatedMissions]
+            }
+
             set({ missions: updatedMissions })
             return
           }
@@ -216,9 +307,42 @@ export const useMissionStore = create<MissionState>()(
           if (error) throw error
 
           const currentMissions = get().missions
-          const updatedMissions = currentMissions.map(m =>
+          const mission = currentMissions.find(m => m.id === missionId)
+
+          let updatedMissions = currentMissions.map(m =>
             m.id === missionId ? { ...m, ...updateData } : m
           )
+
+          // If mission is recurring and just got verified, create next instance in Supabase
+          if (status === 'verified' && mission?.recurring && mission.recurrence_pattern) {
+            const { data: newMission, error: insertError } = await supabase
+              .from('missions')
+              .insert({
+                family_id: mission.family_id,
+                title: mission.title,
+                description: mission.description,
+                category: mission.category,
+                difficulty: mission.difficulty,
+                status: 'pending',
+                created_by: mission.created_by,
+                assigned_to: mission.assigned_to,
+                due_date: getNextDueDate(mission.recurrence_pattern, mission.due_date),
+                recurring: true,
+                recurrence_pattern: mission.recurrence_pattern,
+                rank_points: mission.rank_points,
+                field_bonus: mission.field_bonus,
+              })
+              .select(`
+                *,
+                assignedAgent:users!missions_assigned_to_fkey(full_name, avatar_url)
+              `)
+              .single()
+
+            if (!insertError && newMission) {
+              updatedMissions = [newMission, ...updatedMissions]
+            }
+          }
+
           set({ missions: updatedMissions })
         } catch (error) {
           console.error('Error updating mission:', error)

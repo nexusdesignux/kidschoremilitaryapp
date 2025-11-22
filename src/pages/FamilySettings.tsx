@@ -7,6 +7,7 @@ import { Input } from '../components/ui/Input'
 import { TypeWriter } from '../components/ui/TypeWriter'
 import { DEMO_USERS } from '../utils/mockData'
 import { getAvatarUrl, generateAgentCode } from '../utils/helpers'
+import { PRICING, createCustomerPortalSession } from '../lib/stripe'
 
 interface AgentFormData {
   full_name: string
@@ -85,7 +86,26 @@ export const FamilySettings: FC = () => {
     setErrors({})
   }
 
-  const handleManageSubscription = () => {
+  const handleManageSubscription = async () => {
+    if (demoMode) {
+      setShowSubscriptionModal(true)
+      return
+    }
+
+    // In production, redirect to Stripe customer portal
+    if (family?.stripe_customer_id) {
+      try {
+        const session = await createCustomerPortalSession(family.stripe_customer_id)
+        if (session?.url) {
+          window.location.href = session.url
+          return
+        }
+      } catch (error) {
+        console.error('Error opening customer portal:', error)
+      }
+    }
+
+    // Fallback to modal
     setShowSubscriptionModal(true)
   }
 
@@ -192,13 +212,16 @@ export const FamilySettings: FC = () => {
         </h2>
         <div className="space-y-4">
           <p className="text-text-secondary font-mono text-sm">
-            Current Plan: <span className="font-bold text-accent-secondary">$5/month - Family Plan</span>
+            Current Plan: <span className="font-bold text-accent-secondary">${PRICING.MONTHLY_PRICE}/month - Family Plan</span>
           </p>
           <p className="text-text-muted text-xs font-mono">
             {family?.subscription_status === 'trial'
-              ? 'Trial ends in 14 days. No payment method required during trial.'
+              ? `Trial ends in ${PRICING.TRIAL_DAYS} days. No payment method required during trial.`
               : 'Your subscription is active.'}
           </p>
+          <div className="text-xs font-mono text-text-muted">
+            Annual option: ${PRICING.ANNUAL_PRICE}/year (save ${PRICING.ANNUAL_SAVINGS})
+          </div>
           <Button variant="gold" onClick={handleManageSubscription}>
             MANAGE SUBSCRIPTION
           </Button>
@@ -340,7 +363,10 @@ export const FamilySettings: FC = () => {
           <div className="bg-bg-tertiary border border-border-subtle p-4">
             <div className="text-xs font-mono text-text-muted uppercase mb-2">Current Plan</div>
             <div className="text-lg font-mono font-bold text-accent-secondary">
-              Family Plan - $5/month
+              Family Plan - ${PRICING.MONTHLY_PRICE}/month
+            </div>
+            <div className="text-xs font-mono text-text-muted mt-1">
+              or ${PRICING.ANNUAL_PRICE}/year (save ${PRICING.ANNUAL_SAVINGS})
             </div>
           </div>
 
@@ -356,6 +382,10 @@ export const FamilySettings: FC = () => {
             <div className="flex justify-between text-sm font-mono">
               <span className="text-text-muted">Missions:</span>
               <span className="text-white">Unlimited</span>
+            </div>
+            <div className="flex justify-between text-sm font-mono">
+              <span className="text-text-muted">Gift Card Vault:</span>
+              <span className="text-white">Included</span>
             </div>
           </div>
 
