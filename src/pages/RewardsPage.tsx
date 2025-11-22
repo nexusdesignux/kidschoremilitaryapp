@@ -50,8 +50,39 @@ export const RewardsPage: FC = () => {
   const [redeemedCard, setRedeemedCard] = useState<VaultCard | null>(null)
   const [redemptionRequest, setRedemptionRequest] = useState<RedemptionRequest | null>(null)
   const [loading, setLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const userPoints = user?.rank_points || 0
+
+  // Get redemption URL based on brand
+  const getRedemptionUrl = (brandName: string): string => {
+    const urls: Record<string, string> = {
+      'Roblox': 'https://www.roblox.com/redeem',
+      'Fortnite': 'https://www.epicgames.com/fortnite/redeem',
+      'Amazon': 'https://www.amazon.com/gc/redeem',
+      'Nintendo': 'https://ec.nintendo.com/redeem',
+      'Xbox': 'https://redeem.microsoft.com',
+      'PlayStation': 'https://store.playstation.com/redeem',
+      'Spotify': 'https://www.spotify.com/redeem',
+      'iTunes': 'https://support.apple.com/en-us/HT201209',
+      'Google Play': 'https://play.google.com/redeem',
+      'Steam': 'https://store.steampowered.com/account/redeemwalletcode',
+      'Netflix': 'https://www.netflix.com/redeem',
+      'Disney+': 'https://www.disneyplus.com/redeem',
+    }
+    return urls[brandName] || `https://www.google.com/search?q=${encodeURIComponent(brandName + ' gift card redeem')}`
+  }
+
+  // Copy code to clipboard
+  const handleCopyCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 3000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
 
   // Load rewards and vault cards on mount
   useEffect(() => {
@@ -456,40 +487,58 @@ export const RewardsPage: FC = () => {
             <div className="text-center">
               <div className="text-accent-primary text-5xl mb-4">✓</div>
               <h2 className="text-xl font-mono font-bold text-white uppercase tracking-wider mb-2">
-                REWARD SECURED
+                MISSION ACCOMPLISHED
               </h2>
               <p className="text-sm font-mono text-text-muted mb-6">
-                Here's your {redeemedCard.brand_name} gift card code
+                Your {redeemedCard.brand_name} ${redeemedCard.denomination} Gift Card
               </p>
             </div>
 
-            <div className="bg-bg-tertiary border border-accent-primary p-6 mb-6">
+            <div className="bg-bg-tertiary border border-accent-primary p-6 mb-4">
               <div className="text-xs font-mono text-text-muted uppercase mb-2">YOUR CODE</div>
-              <div className="text-2xl font-mono font-bold text-accent-primary tracking-wider break-all">
+              <div className="text-xl font-mono font-bold text-accent-primary tracking-wider break-all mb-4">
                 {redeemedCard.gift_code}
               </div>
+              <Button
+                variant={copied ? 'primary' : 'secondary'}
+                fullWidth
+                onClick={() => handleCopyCode(redeemedCard.gift_code)}
+              >
+                {copied ? '✓ COPIED!' : 'COPY CODE'}
+              </Button>
             </div>
 
-            <div className="bg-bg-tertiary border border-border-subtle p-4 mb-6">
-              <div className="text-xs font-mono text-accent-secondary uppercase mb-2">HOW TO REDEEM</div>
-              <ol className="text-xs font-mono text-text-muted space-y-1 list-decimal list-inside">
-                <li>Go to {redeemedCard.brand_name}'s website or app</li>
-                <li>Find the "Redeem" or "Gift Card" option</li>
-                <li>Enter the code above</li>
-                <li>Enjoy your reward!</li>
-              </ol>
+            <a
+              href={getRedemptionUrl(redeemedCard.brand_name)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full"
+            >
+              <Button
+                variant="gold"
+                fullWidth
+              >
+                OPEN {redeemedCard.brand_name.toUpperCase()}
+              </Button>
+            </a>
+
+            <div className="text-center mt-4 mb-4">
+              <p className="text-xs font-mono text-text-muted">
+                Code saved in Redemption History
+              </p>
             </div>
 
             <Button
-              variant="gold"
+              variant="secondary"
               fullWidth
               onClick={() => {
                 setShowCodeModal(false)
                 setRedeemedCard(null)
                 setRedemptionRequest(null)
+                setCopied(false)
               }}
             >
-              MISSION COMPLETE
+              CLOSE
             </Button>
           </div>
         </div>

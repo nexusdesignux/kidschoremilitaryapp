@@ -443,6 +443,40 @@ export const DEMO_VAULT_CARDS = [
   },
 ]
 
+// Redemption history for agents
+export const DEMO_REDEMPTION_HISTORY = [
+  {
+    id: 'redemption-1',
+    user_id: 'agent-1',
+    vault_card_id: 'vault-4',
+    brand_name: 'Nintendo',
+    denomination: 20,
+    gift_code: 'NTDO-3948-ESHP-7261',
+    points_spent: 175,
+    redeemed_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'redemption-2',
+    user_id: 'agent-1',
+    vault_card_id: 'vault-old-1',
+    brand_name: 'Roblox',
+    denomination: 10,
+    gift_code: 'RBLX-1234-ABCD-5678',
+    points_spent: 100,
+    redeemed_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'redemption-3',
+    user_id: 'agent-2',
+    vault_card_id: 'vault-old-2',
+    brand_name: 'Amazon',
+    denomination: 10,
+    gift_code: 'AMZN-9876-WXYZ-5432',
+    points_spent: 100,
+    redeemed_at: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+]
+
 export const DEMO_ACCOUNTS = [
   {
     email: 'commander@demo.com',

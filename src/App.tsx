@@ -10,6 +10,7 @@ import RewardsPage from './pages/RewardsPage'
 import FamilySettings from './pages/FamilySettings'
 import AddGiftCard from './pages/AddGiftCard'
 import MobileUpload from './pages/MobileUpload'
+import RedemptionHistory from './pages/RedemptionHistory'
 
 function App() {
   const { user } = useAuthStore()
@@ -34,6 +35,7 @@ function App() {
             <Route path="/agent/:id" element={<AgentProfile />} />
             <Route path="/rewards" element={<RewardsPage />} />
             <Route path="/add-gift-card" element={<AddGiftCard />} />
+            <Route path="/redemption-history" element={<RedemptionHistory />} />
             <Route path="/settings" element={<FamilySettings />} />
           </Route>
         )}
