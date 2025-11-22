@@ -32,7 +32,6 @@ export const AddGiftCard: FC = () => {
 
   const [formData, setFormData] = useState({
     brand_name: '',
-    custom_brand: '',
     denomination: '',
     gift_code: '',
     points_cost: '',
@@ -58,8 +57,7 @@ export const AddGiftCard: FC = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
-    const brandName = formData.brand_name === 'Other' ? formData.custom_brand : formData.brand_name
-    if (!brandName.trim()) {
+    if (!formData.brand_name.trim()) {
       newErrors.brand_name = 'Brand name is required'
     }
 
@@ -90,11 +88,9 @@ export const AddGiftCard: FC = () => {
 
     setLoading(true)
     try {
-      const brandName = formData.brand_name === 'Other' ? formData.custom_brand : formData.brand_name
-
       await addVaultCard({
         family_id: family.id,
-        brand_name: brandName,
+        brand_name: formData.brand_name.trim(),
         denomination: Number(formData.denomination),
         gift_code: formData.gift_code,
         points_cost: Number(formData.points_cost),
@@ -107,7 +103,6 @@ export const AddGiftCard: FC = () => {
       // Reset form
       setFormData({
         brand_name: '',
-        custom_brand: '',
         denomination: '',
         gift_code: '',
         points_cost: '',
@@ -196,33 +191,27 @@ export const AddGiftCard: FC = () => {
             <label className="block text-sm font-mono font-bold text-text-secondary uppercase mb-2">
               Brand
             </label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {BRAND_OPTIONS.map((brand) => (
-                <button
-                  key={brand}
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, brand_name: brand }))}
-                  className={`px-3 py-2 text-xs font-mono font-bold transition-colors ${
-                    formData.brand_name === brand
-                      ? 'bg-accent-primary text-black'
-                      : 'bg-bg-tertiary text-white border border-border-primary hover:border-accent-primary'
-                  }`}
-                >
-                  {brand}
-                </button>
-              ))}
+            <Input
+              placeholder="Enter brand name (e.g., Roblox, Amazon)"
+              value={formData.brand_name}
+              onChange={(e) => setFormData(prev => ({ ...prev, brand_name: e.target.value }))}
+              error={errors.brand_name}
+            />
+            <div className="mt-2">
+              <span className="text-xs font-mono text-text-muted">Quick select: </span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {BRAND_OPTIONS.filter(b => b !== 'Other').map((brand) => (
+                  <button
+                    key={brand}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, brand_name: brand }))}
+                    className="px-2 py-1 text-xs font-mono text-text-muted hover:text-accent-primary hover:underline"
+                  >
+                    {brand}
+                  </button>
+                ))}
+              </div>
             </div>
-            {formData.brand_name === 'Other' && (
-              <Input
-                placeholder="Enter brand name"
-                value={formData.custom_brand}
-                onChange={(e) => setFormData(prev => ({ ...prev, custom_brand: e.target.value }))}
-                error={errors.brand_name}
-              />
-            )}
-            {errors.brand_name && formData.brand_name !== 'Other' && (
-              <p className="text-xs font-mono text-accent-danger mt-1">{errors.brand_name}</p>
-            )}
           </div>
 
           {/* Card Value */}
@@ -331,6 +320,47 @@ export const AddGiftCard: FC = () => {
             Roblox Gift Cards →
           </a>
         </div>
+      </div>
+
+      {/* Legal Disclaimers */}
+      <div className="bg-bg-secondary border border-accent-danger/30 p-6">
+        <h3 className="text-sm font-mono font-bold text-accent-danger uppercase mb-3">
+          IMPORTANT DISCLAIMERS
+        </h3>
+        <ul className="text-xs font-mono text-text-muted space-y-2">
+          <li className="flex items-start gap-2">
+            <span className="text-accent-danger">•</span>
+            <span>
+              <strong>Verify before adding:</strong> Mission Command is not responsible for gift cards
+              that have already been redeemed, are expired, or contain invalid codes.
+            </span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-accent-danger">•</span>
+            <span>
+              <strong>Double-check codes:</strong> Always verify the gift code is correct before adding.
+              Once an agent redeems it, the code cannot be recovered.
+            </span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-accent-danger">•</span>
+            <span>
+              <strong>Keep receipts:</strong> Retain your purchase receipts in case of disputes with
+              the gift card retailer.
+            </span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-accent-danger">•</span>
+            <span>
+              <strong>No refunds:</strong> Points spent on redemptions cannot be refunded if the
+              gift card code doesn't work.
+            </span>
+          </li>
+        </ul>
+        <p className="text-xs font-mono text-text-muted mt-4 pt-4 border-t border-border-subtle">
+          By adding a gift card to the vault, you confirm that the card is valid, unused, and you
+          accept full responsibility for its accuracy.
+        </p>
       </div>
     </div>
   )
