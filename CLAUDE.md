@@ -198,44 +198,46 @@ Think: Spy Kids, Agent Cody Banks, Kim Possible, Club Penguin secret agent missi
 - uploaded_at (timestamp)
 ```
 
-#### `gift_cards` (Digital reward catalog from Tremendous)
+#### `reward_vault` (Parent-loaded gift cards)
 ```sql
 - id (uuid, primary key)
-- tremendous_product_id (text) - Tremendous API product ID
+- family_id (uuid, foreign key)
 - brand_name (text) - "Roblox", "Fortnite", "Amazon", etc.
-- display_name (text) - "Roblox Gift Card"
-- description (text)
-- category (enum: gaming/streaming/shopping/entertainment)
-- denominations (array) - [10, 25, 50, 100] available amounts
-- brand_logo_url (text) - Logo image
-- point_cost_per_dollar (integer) - e.g., 20 points = $1
-- parent_cost_markup (decimal) - Your markup percentage (e.g., 0.40 for 40%)
-- is_active (boolean)
-- is_featured (boolean)
-- age_minimum (integer)
-- sort_order (integer)
+- denomination (integer) - 10, 25, 50, 100
+- gift_code (text, encrypted) - The actual redemption code
+- photo_url (text) - Supabase storage URL to card photo
+- photo_uploaded_at (timestamp)
+- points_required (integer) - Parent decides how many points
+- status (enum: available/redeemed/expired)
+- added_by (uuid, foreign key to users) - Which parent added it
+- redeemed_by (uuid, foreign key to users) - Which kid redeemed (nullable)
+- redeemed_at (timestamp, nullable)
 - created_at (timestamp)
+- notes (text) - Optional parent notes
 ```
 
-#### `reward_redemptions`
+#### `upload_sessions` (QR code photo upload system)
+```sql
+- id (uuid, primary key)
+- family_id (uuid, foreign key)
+- user_id (uuid, foreign key) - Which parent created session
+- photo_url (text) - Uploaded photo URL
+- status (enum: pending/completed/expired)
+- created_at (timestamp)
+- expires_at (timestamp) - 10 minute expiry
+- used_at (timestamp, nullable)
+```
+
+#### `reward_redemptions` (Tracking vault redemptions)
 ```sql
 - id (uuid, primary key)
 - user_id (uuid, foreign key) - Which kid redeemed
-- gift_card_id (uuid, foreign key)
-- denomination (integer) - $10, $25, $50, or $100
+- reward_vault_id (uuid, foreign key) - Which card from vault
 - points_spent (integer)
-- parent_cost_usd (decimal) - What parent paid
-- tremendous_cost_usd (decimal) - What you paid Tremendous
-- profit_usd (decimal) - Your profit margin
-- stripe_payment_intent_id (text)
-- tremendous_order_id (text) - Tremendous API order ID
-- tremendous_reward_id (text) - Tremendous API reward ID
-- gift_code (text) - The actual redemption code (encrypted)
-- redemption_url (text) - Where to redeem the code
-- status (enum: pending/processing/delivered/failed)
-- email_sent_at (timestamp)
 - redeemed_at (timestamp)
-- created_at (timestamp)
+- email_sent_at (timestamp)
+- parent_approved_by (uuid, foreign key to users)
+- parent_approved_at (timestamp)
 ```
 
 #### `rewards` (Parent-created family rewards - free)
@@ -260,6 +262,17 @@ Think: Spy Kids, Agent Cody Banks, Kim Possible, Club Penguin secret agent missi
 - redeemed_at (timestamp)
 - fulfilled_at (timestamp) - When parent marked as given
 - fulfilled_by (uuid, foreign key to users) - Which parent fulfilled it
+```
+
+#### `affiliate_clicks` (Track affiliate link performance - optional)
+```sql
+- id (uuid, primary key)
+- family_id (uuid, foreign key)
+- user_id (uuid, foreign key)
+- brand (text) - "Amazon", "Target", etc.
+- product_type (text) - "Roblox $25", etc.
+- clicked_at (timestamp)
+- converted (boolean) - Did they add card to vault after?
 ```
 
 ## Key Features
@@ -313,30 +326,66 @@ Think: Spy Kids, Agent Cody Banks, Kim Possible, Club Penguin secret agent missi
      - "Clean Sweep" - Complete all missions in a week
    - Display badges on agent profile
 
-7. **Digital Rewards Marketplace**
+7. **Digital Rewards Marketplace (Parent-Loaded Vault)**
    - **Two reward types:**
      - **Family Rewards:** Parents create custom rewards (ice cream, screen time, etc.) - FREE, no cost
-     - **Gift Card Marketplace:** Kids redeem points for real digital gift cards (parent pays)
+     - **Gift Card Vault:** Parents pre-load gift cards they purchase themselves
    
-   - **Gift Card Marketplace powered by Tremendous API:**
-     - **Gaming:** Roblox, Fortnite V-Bucks, Minecraft, Xbox, PlayStation, Nintendo
-     - **Streaming:** Netflix, Disney+, Spotify, Apple Music
-     - **Shopping:** Amazon, Target, Walmart
-     - **Entertainment:** iTunes, Google Play, Steam
+   - **Parent-Loaded Gift Card System:**
+     - **Parents buy cards** from Amazon, Target, Walmart (you provide affiliate links)
+     - **Parents load cards into vault** via app
+     - **Photo backup system:** Parents take/upload photo of each card for safety
+     - **Three upload methods:**
+       1. **QR Code Magic (Desktop → Phone):** Desktop shows QR → Scan with phone → Camera opens → Photo syncs instantly to desktop
+       2. **Direct upload from phone:** Parents using mobile can upload directly
+       3. **Desktop file upload:** Choose photo from computer
+     - Parent manually enters: Brand, denomination, gift code, points required
+     - Cards stored securely in family's reward vault
    
-   - **Redemption Flow:**
-     1. Kid browses marketplace
-     2. Selects gift card (e.g., "$25 Roblox - 500 points + $10")
+   - **QR Code Upload Flow (Detailed):**
+     1. Parent clicks "Add Gift Card" on desktop computer
+     2. App generates unique upload session with QR code
+     3. Desktop displays QR code: "Scan with your phone to upload photo"
+     4. Parent opens phone camera and scans QR code
+     5. Phone automatically opens: `missioncommand.app/upload/abc123`
+     6. Mobile page shows military-themed camera interface
+     7. Parent taps "Take Photo" → Rear camera opens
+     8. Parent photographs gift card (app shows frame guide)
+     9. Photo uploads to Supabase secure storage
+     10. **Desktop page updates in real-time** with photo thumbnail (feels like magic!)
+     11. Parent continues on desktop: enters code while viewing photo
+     12. Session expires after 10 minutes (security)
+     13. Saves complete card to vault
+   
+   - **Technical Benefits:**
+     - No emailing photos to yourself
+     - No cable transfers needed
+     - No cloud sync required (iCloud, Google Photos)
+     - Works on ANY phone (iOS, Android)
+     - Instant - whole flow takes 30 seconds
+     - Real-time sync via Supabase subscriptions
+   
+   - **Kid Redemption Flow:**
+     1. Kid browses reward vault
+     2. Selects gift card (e.g., "$25 Roblox - 500 points")
      3. Parent gets notification with approve/deny
-     4. Parent approves → Stripe charges parent $10
-     5. System calls Tremendous API to purchase $25 card (costs ~$26)
-     6. **Themed military email sent instantly** with gift code
-     7. Kid receives code in 2-5 minutes
+     4. Parent approves → Card code is revealed to kid
+     5. **Themed military email sent instantly** with gift code and redemption instructions
+     6. Kid redeems at Roblox.com (or wherever)
+     7. Points deducted from kid's account
    
-   - **Point + Cash Hybrid Pricing:**
-     - Kid must earn points threshold (proves they did work)
-     - Parent pays discounted cash amount
-     - Example: $25 card = 500 points + $10 cash (parent saves $15)
+   - **Photo Backup Benefits:**
+     - Prevents lost codes
+     - Fixes typos (parent can check photo if code doesn't work)
+     - Proof of purchase
+     - Peace of mind
+     - **Future: OCR auto-extraction** of codes from photos
+   
+   - **Affiliate Link System:**
+     - App provides "Buy Cards" links to Amazon, Target, Walmart, Best Buy
+     - Links open in new window (don't leave app)
+     - You earn 3-5% affiliate commission (bonus revenue)
+     - Parent still buys cards themselves, you just facilitate
    
    - **Family Rewards (Custom):**
      - Parents create unlimited free rewards
@@ -360,47 +409,60 @@ Think: Spy Kids, Agent Cody Banks, Kim Possible, Club Penguin secret agent missi
 ### Phase 2: Premium Features & Integrations
 
 9. **Stripe Integration**
-   - Family subscription: $7-12/month (tiered pricing)
-   - Gift card purchases (one-time payments when kid redeems)
+   - Family subscription: $12/month flat rate
+   - Unlimited kids, unlimited missions
+   - Full reward vault access
    - Checkout on enlistment (subscription)
-   - Checkout for reward approvals (parent pays for gift cards)
-   - Webhook handling for subscription and payment events
+   - Webhook handling for subscription events
    - Grace period for failed subscription payments
+   - Free 14-day trial
 
-10. **Tremendous API Integration**
-    - Connect to Tremendous API for digital gift card fulfillment
-    - Sync available products and denominations
-    - Process orders in real-time
-    - Handle order status updates
-    - Encrypt and store gift codes securely
-    - Error handling and retry logic
+10. **QR Code Photo Upload System**
+    - Generate unique upload sessions with QR codes
+    - Desktop shows QR code
+    - Parent scans with phone camera
+    - Mobile upload page opens automatically
+    - Photo uploads to Supabase Storage (encrypted)
+    - Desktop updates in real-time via Supabase subscriptions
+    - Session expiry (10 minutes)
+    - One-time use tokens
+    - Fallback: Manual file upload from computer
 
 11. **SendGrid Email System**
     - Themed military email templates
-    - Triggered on gift card delivery
-    - Personalized with kid's name, rank, stats
+    - Triggered on gift card redemption
+    - Personalized with kid's name, rank, stats, gift code
     - Beautiful HTML with fallback to plain text
     - Track email opens and clicks
     - Resend functionality if email fails
 
-12. **Advanced Features (Premium Tier)**
+12. **Affiliate Link Integration**
+    - Provide convenience links to buy gift cards
+    - Amazon Associates integration
+    - Rakuten for Target/Walmart
+    - Links open in new window
+    - Earn 3-5% commission (bonus revenue)
+    - Track click-through rates
+
+13. **Advanced Features (Premium Tier)**
     - Mission templates (pre-made chores library)
     - Custom badge creator
     - Family stats and analytics
     - Mission photos and verification
     - Multiple commanders (both parents)
     - Export chore completion reports
-    - Wishlist feature (save favorite gift cards)
+    - Reward vault organization (folders, tags)
     - Gift card balance tracking
 
-13. **Notifications**
+14. **Notifications**
     - Push notifications for mission assignments
     - Reminders as due dates approach
     - Celebration notifications when kids complete missions
     - Parent alerts when missions need verification
-    - **Redemption approval notifications:** "Agent Tommy wants to redeem 500 points for a $25 Roblox card ($10 to approve)"
-    - **Instant reward notifications:** "Your gift code has been delivered! Check your email"
-    - Point milestone notifications: "50 more points until you can get that Fortnite card!"
+    - **Redemption approval notifications:** "Agent Tommy wants to redeem 500 points for the $25 Roblox card you loaded"
+    - **Instant reward notifications:** "Your gift code has been revealed! Check your email"
+    - Point milestone notifications: "50 more points until you can unlock that Fortnite card!"
+    - **Vault alerts:** "Reminder: Load gift cards to keep rewards available"
 
 ## User Roles & Permissions
 
@@ -516,20 +578,26 @@ src/
 │   │   ├── BadgeCard.jsx          # Individual badge
 │   │   └── LevelUpAnimation.jsx   # Rank progression celebration
 │   ├── rewards/
-│   │   ├── RewardStore.jsx        # Browse family rewards + gift cards
-│   │   ├── GiftCardGrid.jsx       # Display available gift cards
-│   │   ├── GiftCardCard.jsx       # Individual gift card display
+│   │   ├── RewardVault.jsx        # Browse family rewards + gift card vault
+│   │   ├── VaultCard.jsx          # Individual gift card in vault display
+│   │   ├── AddCardForm.jsx        # Parent adds card to vault
+│   │   ├── QRCodeUpload.jsx       # QR code display for mobile photo upload
+│   │   ├── PhotoUpload.jsx        # Direct photo upload component
 │   │   ├── FamilyRewardCard.jsx   # Parent-created reward display
 │   │   ├── RewardForm.jsx         # Parent creates family rewards
-│   │   ├── PurchaseModal.jsx      # Parent approval + Stripe payment
-│   │   ├── RedemptionSuccess.jsx  # Confirmation screen with email preview
-│   │   ├── Wishlist.jsx           # Kid's saved gift cards
+│   │   ├── RedemptionModal.jsx    # Kid redemption + parent approval flow
+│   │   ├── CodeReveal.jsx         # Success screen showing gift code
+│   │   ├── Wishlist.jsx           # Kid's saved cards (future)
 │   │   └── RedemptionHistory.jsx  # Past redemptions (both types)
-│   ├── giftcards/
-│   │   ├── CategoryFilter.jsx     # Filter: Gaming, Streaming, Shopping
-│   │   ├── DenominationPicker.jsx # Choose $10, $25, $50, $100
-│   │   ├── FeaturedCards.jsx      # Spotlight popular cards
-│   │   └── CardDetail.jsx         # Full gift card page with details
+│   ├── upload/
+│   │   ├── MobileUploadPage.jsx   # Mobile page opened from QR scan
+│   │   ├── CameraCapture.jsx      # Mobile camera interface
+│   │   ├── UploadSuccess.jsx      # Success confirmation
+│   │   └── SessionExpired.jsx     # Expired session handler
+│   ├── affiliate/
+│   │   ├── AffiliateLinks.jsx     # Buy cards links (Amazon, Target, etc.)
+│   │   ├── BrandSelector.jsx      # Choose which brand to buy
+│   │   └── AffiliateBanner.jsx    # Helpful buying suggestions
 │   ├── emails/
 │   │   ├── MilitaryRewardEmail.jsx    # Email template component
 │   │   ├── EmailPreview.jsx       # Preview before sending
@@ -545,24 +613,28 @@ src/
 │   ├── CommandCenter.jsx          # Main dashboard (role-based)
 │   ├── MissionBriefing.jsx        # Mission detail page
 │   ├── AgentProfile.jsx           # Kid's profile and stats
-│   ├── RewardsMarketplace.jsx     # Family rewards + Gift cards
-│   ├── GiftCardDetail.jsx         # Individual gift card page
-│   ├── PurchaseApproval.jsx       # Parent approval flow
-│   ├── RedemptionHistory.jsx      # Order history
-│   ├── WishlistPage.jsx           # Saved gift cards
+│   ├── RewardVault.jsx            # Family rewards + Gift card vault
+│   ├── AddGiftCard.jsx            # Parent adds card to vault (with QR code)
+│   ├── MobileUpload.jsx           # Mobile camera upload page (from QR scan)
+│   ├── RedemptionApproval.jsx     # Parent approval flow
+│   ├── RedemptionHistory.jsx      # Past redemptions
+│   ├── BuyCards.jsx               # Affiliate links page
 │   ├── FamilySettings.jsx         # Parent settings
 │   └── BillingPage.jsx            # Subscription management
 ├── lib/
 │   ├── supabase.js                # Supabase client
 │   ├── stripe.js                  # Stripe utilities
-│   ├── tremendous.js              # Tremendous API client
 │   ├── sendgrid.js                # SendGrid email client
+│   ├── qrcode.js                  # QR code generation utilities
+│   ├── encryption.js              # Gift code encryption/decryption
 │   └── achievements.js            # Badge logic and definitions
 ├── hooks/
 │   ├── useMissions.js
 │   ├── useAgent.js
 │   ├── useAchievements.js
-│   ├── useRewards.js
+│   ├── useRewardVault.js         # Manage gift card vault
+│   ├── useUploadSession.js       # QR code upload sessions
+│   ├── useRewards.js              # Family custom rewards
 │   └── useAuth.js
 └── utils/
     ├── constants.js               # Mission categories, ranks, badges
@@ -671,20 +743,20 @@ VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_webhook_secret
 
-# Tremendous API (Digital Gift Cards)
-TREMENDOUS_API_KEY=your_tremendous_api_key
-TREMENDOUS_FUNDING_SOURCE_ID=your_funding_source_id
-TREMENDOUS_CAMPAIGN_ID=your_campaign_id
-TREMENDOUS_BASE_URL=https://testflight.tremendous.com/api/v2  # Sandbox
-# TREMENDOUS_BASE_URL=https://www.tremendous.com/api/v2  # Production
-
 # SendGrid (Email Delivery)
 SENDGRID_API_KEY=your_sendgrid_api_key
 SENDGRID_FROM_EMAIL=rewards@missioncommand.app
 SENDGRID_TEMPLATE_ID=your_template_id
 
+# Affiliate Links (Optional - for commission tracking)
+AMAZON_ASSOCIATE_TAG=yourcode-20
+RAKUTEN_AFFILIATE_ID=your_rakuten_id
+
+# Encryption (for gift codes in database)
+GIFT_CODE_ENCRYPTION_KEY=your_32_char_secret_key
+
 # App
-VITE_APP_URL=http://localhost:5173 (or production URL)
+VITE_APP_URL=http://localhost:5173  # or production URL
 NODE_ENV=development  # or production
 ```
 
@@ -844,52 +916,49 @@ NODE_ENV=development  # or production
 
 ## Monetization Notes
 
-### Revenue Streams
+### Revenue Model: Pure SaaS Subscription
 
-#### 1. Subscription Revenue (Predictable MRR)
-**Tiered Pricing:**
-- **Free Tier:** 1 kid, 5 active missions max, basic badges, family custom rewards only (no gift cards)
-- **Basic Plan:** $7/month - 3 kids, unlimited missions, all badges, full gift card marketplace access
-- **Premium Plan:** $12/month - Unlimited kids, priority support, advanced analytics, exclusive gift cards
+**Mission Command uses a simple subscription model.** Parents pay a flat monthly fee for unlimited access. There are NO transaction fees, NO per-card costs, NO payment processing for gift cards.
 
-**Recommended: Single Premium Tier**
-- **Family Plan:** $7/month - Unlimited kids, all features, full marketplace access
-- Simple, clear value proposition
-- Easy to explain to parents
+**Why This Works:**
+- Parents buy gift cards themselves (from Amazon, Target, etc.)
+- Parents pre-load cards into the app's "Reward Vault"
+- Kids earn points to unlock cards parents already purchased
+- You provide the tracking, gamification, and motivation platform
 
-#### 2. Digital Gift Card Revenue (High-Margin Transactions)
-**How It Works:**
-- Kid earns points by completing missions (chores)
-- Kid redeems points for gift cards in marketplace
-- Parent pays cash to approve the reward
-- You buy gift card from Tremendous API and deliver instantly
+---
 
-**Pricing Example:**
-- Kid wants: $25 Roblox Gift Card
-- Points required: 500 RP (proves they did the work)
-- Parent pays: $35
-- Your cost: $26.25 (Tremendous charges $25 + 5% fee)
-- Stripe fee: $1.32 (3% of $35)
-- Email cost: $0.001
-- **Your profit:** $7.42 per transaction (21% margin)
+### Pricing Tiers
 
-**Why Parent Pays More Than Face Value:**
-- Points are the "earning" mechanism (kid did chores)
-- Parent pays for the actual reward
-- $35 feels fair for $35 worth of chores done
-- Kid gets $25 card, you keep $7.42 profit
+#### Free Tier
+- 1 kid maximum
+- 5 active missions per month
+- Basic badges only
+- Family custom rewards only (no gift card vault)
+- **Goal:** Let families try the system, get hooked on gamification
 
-**Alternative Lower-Price Model:**
-- Parent pays: $30 (instead of $35)
-- Your profit: $2.42 per transaction (8% margin)
-- Lower margin but more attractive to parents
-- Higher conversion rate
+#### Premium Tier - $12/month (RECOMMENDED)
+- **Unlimited kids**
+- **Unlimited missions**
+- **Full gift card vault system**
+- All achievement badges
+- Photo backup for gift cards
+- QR code mobile upload
+- Themed reward emails
+- Family analytics
+- Recurring missions
+- Priority support
 
-**Gift Card Catalog Tiers:**
-- **Low tier:** $10 cards → Parent pays $15 → Profit $3
-- **Mid tier:** $25 cards → Parent pays $35 → Profit $7.42
-- **High tier:** $50 cards → Parent pays $65 → Profit $12
-- **Premium tier:** $100 cards → Parent pays $125 → Profit $21
+**Value Proposition:**
+- Costs less than 2 coffees/month
+- Replaces traditional allowance system
+- No per-transaction fees
+- Unlimited usage
+
+#### Annual Plan - $120/year
+- Same as Premium
+- **Save $24/year** (2 months free)
+- One-time payment, no monthly hassle
 
 ---
 
@@ -898,73 +967,108 @@ NODE_ENV=development  # or production
 #### Scenario: 1,000 Active Families
 
 **Subscription Revenue:**
-- 800 families @ $7/month = $5,600/month
-- 200 families on free tier = $0
-- **Total Subscription MRR:** $5,600/month = $67,200/year
+- 200 on Free tier = $0
+- 800 on Premium @ $12/month = $9,600/month
+- **Total MRR:** $9,600
+- **Annual Recurring Revenue (ARR):** $115,200
 
-**Digital Gift Card Revenue:**
-- 50% of paid families redeem 1 card/month = 400 redemptions
-- Average denomination: $25
-- Average parent payment: $35
-- Average profit per order: $7.42
-- **Monthly gift card profit:** $2,968
-- **Annual gift card profit:** $35,616
+**Affiliate Commission (Bonus):**
+- 40% of families buy $50/month in cards through affiliate links
+- 400 families × $50 × 4% commission = $800/month
+- **Annual bonus:** $9,600
 
-**Total Annual Revenue:** $102,816 from 1,000 families
+**Total Annual Revenue:** $124,800
+
+**Costs:**
+- Supabase Pro: $25/mo = $300/year
+- Vercel Pro: $20/mo = $240/year
+- SendGrid: $20/mo = $240/year
+- Stripe fees: $9,600 × 0.029 + ($0.30 × 12 × 800) = $3,168/year
+- Domain & misc: $100/year
+- **Total Annual Costs:** $4,048
+
+**Net Annual Profit:** $120,752 (97% margin!)
+
+---
 
 #### Scenario: 5,000 Active Families
 
 **Subscription Revenue:**
-- 4,000 families @ $7/month = $28,000/month = $336,000/year
-- 1,000 families free tier
+- 1,000 on Free tier = $0
+- 4,000 on Premium @ $12/month = $48,000/month
+- **Total MRR:** $48,000
+- **Annual Recurring Revenue (ARR):** $576,000
 
-**Digital Gift Card Revenue:**
-- 50% redeem 1 card/month = 2,000 redemptions
-- $7.42 average profit × 2,000 = $14,840/month
-- **Annual gift card profit:** $178,080
+**Affiliate Commission (Bonus):**
+- 40% of paying families buy $50/month through links
+- 1,600 families × $50 × 4% = $3,200/month
+- **Annual bonus:** $38,400
 
-**Total Annual Revenue:** $514,080 from 5,000 families
+**Total Annual Revenue:** $614,400
+
+**Costs:**
+- Supabase Pro: $300/year
+- Vercel Pro: $240/year
+- SendGrid (20K emails/mo): $240/year
+- Stripe fees: ~$15,840/year
+- Customer support (part-time VA): $12,000/year
+- Misc: $500/year
+- **Total Annual Costs:** $29,120
+
+**Net Annual Profit:** $585,280 (95% margin!)
+
+---
 
 #### Scenario: 10,000 Active Families (Scale)
 
 **Subscription Revenue:**
-- 8,000 families @ $7/month = $56,000/month = $672,000/year
+- 2,000 on Free tier = $0
+- 8,000 on Premium @ $12/month = $96,000/month
+- **Total MRR:** $96,000
+- **Annual Recurring Revenue (ARR):** $1,152,000
 
-**Digital Gift Card Revenue:**
-- 4,000 redemptions/month × $7.42 = $29,680/month
-- **Annual gift card profit:** $356,160
+**Affiliate Commission (Bonus):**
+- 3,200 families × $50 × 4% = $6,400/month
+- **Annual bonus:** $76,800
 
-**Total Annual Revenue:** $1,028,160/year
+**Total Annual Revenue:** $1,228,800
+
+**Costs:**
+- Supabase Pro: $300/year
+- Vercel: $240/year
+- SendGrid (50K emails/mo): $500/year
+- Stripe fees: ~$31,680/year
+- Customer support (2 FT): $80,000/year
+- Marketing: $50,000/year
+- Misc: $2,000/year
+- **Total Annual Costs:** $164,720
+
+**Net Annual Profit:** $1,064,080 (87% margin even at scale!)
 
 ---
 
-### Cost Structure
+### Why This Business Model is Superior
 
-**Monthly Operating Costs (5,000 families):**
-- Supabase Pro: $25/mo
-- Vercel Pro: $20/mo
-- SendGrid (10K emails): $20/mo
-- Stripe fees (subscriptions): ~$1,000/mo (3% of $28K)
-- Tremendous balance: $0 (pay as you go)
-- Domain & misc: $20/mo
-- Customer support: $100/mo (part-time)
-- **Total fixed costs:** ~$1,185/mo
+#### vs Tremendous/Marketplace Model:
+- **Tremendous:** 60-70% margins (after gift card costs)
+- **This model:** 95%+ margins (no card costs)
 
-**Variable Costs:**
-- Stripe fees on gift cards: Included in margin calculations
-- Tremendous fees: Included in margin calculations
-- Email delivery: $0.001 per email (negligible)
+#### vs Physical Products:
+- **Physical:** 25-30% margins, shipping headaches, inventory
+- **This model:** 95% margins, zero inventory, zero shipping
 
-**Net Profit (5,000 families):**
-- Total revenue: $42,840/month
-- Operating costs: -$1,185/month
-- **Net monthly profit:** $41,655
-- **Annual net profit:** $499,860
+#### Operational Complexity:
+- **No payment processing for gift cards** (parents buy themselves)
+- **No refunds or chargebacks** on cards (parent's responsibility)
+- **No "code doesn't work" support tickets** (parent can check photo backup)
+- **No Tremendous API failures** to handle
+- **No fraud risk** on gift card purchases
 
-**Profit Margins:**
-- Subscription: 96% margin (SaaS standard)
-- Gift cards: 21% margin (retail standard)
-- **Blended margin:** 91% (incredible)
+#### Customer Perception:
+- **Parents feel in control** (they buy cards, set budgets)
+- **Kids still get instant gratification** (code reveals immediately)
+- **Transparent pricing** ($12/month, no hidden fees)
+- **Better than allowance** (kids must earn rewards)
 
 ## Key Principles for Development
 
@@ -997,29 +1101,41 @@ Then iterate with these prompts:
 - "Build the points and ranking system with level-up animations"
 - "Create achievement badge system that auto-awards milestones"
 
-**Phase 2: Digital Rewards Marketplace (Week 3-4)**
-- "Build the gift card marketplace showing Roblox, Fortnite, Amazon cards"
-- "Implement redemption flow: kid selects card, parent gets notification to approve"
-- "Integrate Stripe for parent payment when approving gift card redemptions"
-- "Integrate Tremendous API to purchase and deliver digital gift cards"
-- "Create themed military email template for reward delivery"
-- "Integrate SendGrid to send reward emails with gift codes"
+**Phase 2: Reward Vault System (Week 3)**
+- "Build the reward vault where parents can add gift cards they purchased"
+- "Create QR code generation for mobile photo upload"
+- "Build mobile upload page that opens when QR code is scanned"
+- "Implement real-time photo sync from mobile to desktop using Supabase subscriptions"
+- "Add manual photo upload as fallback option"
+- "Create parent form to enter brand, denomination, gift code, and points required"
+- "Implement secure encrypted storage for gift codes"
 
-**Phase 3: Polish & Launch (Week 5-6)**
-- "Add family custom rewards (parent-created, no cost)"
-- "Implement wishlist feature for gift cards"
-- "Add redemption history page"
+**Phase 3: Redemption Flow (Week 3-4)**
+- "Build kid's reward vault browser showing available cards to unlock"
+- "Create redemption request flow where kid selects card and parent gets notified"
+- "Implement parent approval workflow"
+- "Build code reveal screen that shows gift code after approval"
+- "Create themed military email template for reward delivery using SendGrid"
+- "Add family custom rewards system (parent-created, no gift cards)"
+
+**Phase 4: Polish & Launch (Week 4)**
+- "Add Stripe integration for $12/month subscription"
+- "Implement affiliate link system for Amazon, Target, Walmart gift card purchases"
+- "Add redemption history page showing past rewards"
 - "Create parent dashboard with family analytics"
 - "Implement recurring missions (daily/weekly auto-create)"
 - "Add push notifications for mission reminders and reward approvals"
+- "Add photo backup viewing in vault (click to see card photo)"
 
 **Key Implementation Notes:**
 - Start with DESIGN_SPEC.md for exact visual styling (professional military aesthetic)
-- Use TREMENDOUS_INTEGRATION.md for complete API integration guide
+- Use `qrcode` npm package for QR code generation
+- Use Supabase Storage for secure photo storage with RLS policies
+- Use Supabase real-time subscriptions for instant desktop updates when photo uploads
+- Encrypt gift codes in database (never store plain text)
+- Session expiry: 10 minutes for upload sessions
 - Reference THEMES_SPEC.md for future theme expansion (not MVP)
-- Start with Tremendous testflight (sandbox) and Stripe test mode
-- Launch with 10-15 gift card brands, expand after validation
 
 ---
 
-**Remember:** This is not just a chore app—it's an instant rewards platform that makes kids EXCITED to do chores because they can earn REAL Roblox and Fortnite gift cards. The military theme makes it feel cool and official. The instant email delivery makes it magical. Parents love it because kids actually do chores. You love it because you profit $7+ per transaction with 90%+ margins. MISSION SUCCESS! 🎖️
+**Remember:** This is NOT a marketplace—it's a **tracking and motivation platform**. Parents buy cards themselves, you provide the gamification that makes kids WANT to do chores. The QR code photo upload makes it seamless. The military theme makes it cool. The instant code reveal makes it magical. Parents love it because kids actually do chores without nagging. You love it because it's 97% profit margin pure SaaS with zero fulfillment headaches. MISSION SUCCESS! 🎖️
