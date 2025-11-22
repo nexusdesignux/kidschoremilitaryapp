@@ -49,22 +49,14 @@ Mission Command is a gamified chores app for families that makes household tasks
 
 ### Payments & Rewards
 - **Stripe** for:
-  - Subscription billing ($7-12/month per family)
-  - One-time reward purchases (parent pays for gift cards)
+  - Subscription billing ($12/month per family)
+  - Automatic receipt emails (built-in, free)
   - Payment processing
   - Webhook handling
-- **Tremendous API** for digital gift card delivery
-  - Roblox, Fortnite, Amazon, and 2,000+ brands
-  - Instant digital delivery
-  - Pay-as-you-go pricing
-  - RESTful API integration
 
-### Email Delivery
-- **SendGrid** or **Postmark** for themed reward emails
-  - HTML email templates (military themed)
-  - 99% deliverability
-  - Track opens/clicks
-  - ~$0.001 per email
+### Notifications
+- **Browser Push Notifications** for parent approval alerts (free, built-in)
+- **In-app notifications** for real-time updates
 
 ### Hosting
 - **Vercel** for frontend deployment
@@ -368,11 +360,13 @@ Think: Spy Kids, Agent Cody Banks, Kim Possible, Club Penguin secret agent missi
    - **Kid Redemption Flow:**
      1. Kid browses reward vault
      2. Selects gift card (e.g., "$25 Roblox - 500 points")
-     3. Parent gets notification with approve/deny
-     4. Parent approves → Card code is revealed to kid
-     5. **Themed military email sent instantly** with gift code and redemption instructions
-     6. Kid redeems at Roblox.com (or wherever)
-     7. Points deducted from kid's account
+     3. Parent gets **browser push notification** or sees in-app alert
+     4. Parent approves in app (no payment - they already bought the card)
+     5. **Gift code appears instantly on kid's screen** - no email needed!
+     6. Kid can copy code with one click and redeem immediately
+     7. Points automatically deducted
+     8. Code saved in "Redemption History" for later access
+     9. Kid can click "Open Roblox.com" button to redeem directly
    
    - **Photo Backup Benefits:**
      - Prevents lost codes
@@ -394,21 +388,31 @@ Think: Spy Kids, Agent Cody Banks, Kim Possible, Club Penguin secret agent missi
      - "Choose dinner" (150 points)
      - Pure points cost, no money
 
-8. **Themed Reward Emails**
-   - Military-themed HTML emails delivered instantly
-   - Includes: Agent name, rank, mission stats, gift code, redemption instructions
-   - Feels like receiving classified intel
-   - "MISSION ACCOMPLISHED" celebration
-   - Next missions preview to keep engagement high
+8. **In-App Code Reveal System**
+   - Military-themed success screen when code is unlocked
+   - Instant code display (no email needed)
+   - One-click copy to clipboard
+   - Direct redemption links (opens Roblox.com, etc.)
+   - Code permanently saved in Redemption History
+   - Can reveal/hide codes for security
+   - "Mission Accomplished" celebration animation
 
-9. **Recurring Missions**
-   - Daily missions auto-create (make bed, brush teeth)
-   - Weekly missions (clean room every Saturday)
-   - Smart scheduling that doesn't overwhelm kids
+9. **Browser Push Notifications**
+   - Parent gets alert when kid requests redemption
+   - "Agent Tommy wants to redeem Roblox $25 - Approve?"
+   - In-app notification badges for pending approvals
+   - Mission reminders (optional)
+   - Celebration notifications when missions completed
+
+10. **Recurring Missions**
+    - Daily missions auto-create (make bed, brush teeth)
+    - Weekly missions (clean room every Saturday)
+    - Smart scheduling that doesn't overwhelm kids
+    - Auto-reset at specified times
 
 ### Phase 2: Premium Features & Integrations
 
-9. **Stripe Integration**
+11. **Stripe Integration**
    - Family subscription: $12/month flat rate
    - Unlimited kids, unlimited missions
    - Full reward vault access
@@ -428,14 +432,6 @@ Think: Spy Kids, Agent Cody Banks, Kim Possible, Club Penguin secret agent missi
     - One-time use tokens
     - Fallback: Manual file upload from computer
 
-11. **SendGrid Email System**
-    - Themed military email templates
-    - Triggered on gift card redemption
-    - Personalized with kid's name, rank, stats, gift code
-    - Beautiful HTML with fallback to plain text
-    - Track email opens and clicks
-    - Resend functionality if email fails
-
 12. **Affiliate Link Integration**
     - Provide convenience links to buy gift cards
     - Amazon Associates integration
@@ -454,13 +450,13 @@ Think: Spy Kids, Agent Cody Banks, Kim Possible, Club Penguin secret agent missi
     - Reward vault organization (folders, tags)
     - Gift card balance tracking
 
-14. **Notifications**
+13. **Advanced Notifications** (all handled via browser push + in-app)
     - Push notifications for mission assignments
     - Reminders as due dates approach
     - Celebration notifications when kids complete missions
     - Parent alerts when missions need verification
-    - **Redemption approval notifications:** "Agent Tommy wants to redeem 500 points for the $25 Roblox card you loaded"
-    - **Instant reward notifications:** "Your gift code has been revealed! Check your email"
+    - **Redemption approval alerts:** "Agent Tommy wants to redeem 500 points for $25 Roblox"
+    - **Success notifications:** "Code revealed! Copy it now from your dashboard"
     - Point milestone notifications: "50 more points until you can unlock that Fortnite card!"
     - **Vault alerts:** "Reminder: Load gift cards to keep rewards available"
 
@@ -598,10 +594,10 @@ src/
 │   │   ├── AffiliateLinks.jsx     # Buy cards links (Amazon, Target, etc.)
 │   │   ├── BrandSelector.jsx      # Choose which brand to buy
 │   │   └── AffiliateBanner.jsx    # Helpful buying suggestions
-│   ├── emails/
-│   │   ├── MilitaryRewardEmail.jsx    # Email template component
-│   │   ├── EmailPreview.jsx       # Preview before sending
-│   │   └── ResendEmail.jsx        # Resend failed emails
+│   ├── notifications/
+│   │   ├── PushNotification.jsx   # Browser push notification handler
+│   │   ├── NotificationBadge.jsx  # In-app notification badges
+│   │   └── NotificationCenter.jsx # View all notifications
 │   └── dashboard/
 │       ├── ParentDashboard.jsx    # Commander view
 │       ├── KidDashboard.jsx       # Agent view
@@ -624,9 +620,9 @@ src/
 ├── lib/
 │   ├── supabase.js                # Supabase client
 │   ├── stripe.js                  # Stripe utilities
-│   ├── sendgrid.js                # SendGrid email client
 │   ├── qrcode.js                  # QR code generation utilities
 │   ├── encryption.js              # Gift code encryption/decryption
+│   ├── notifications.js           # Browser push notification utilities
 │   └── achievements.js            # Badge logic and definitions
 ├── hooks/
 │   ├── useMissions.js
@@ -742,11 +738,6 @@ SUPABASE_SERVICE_KEY=your_service_key  # For server-side operations
 VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_webhook_secret
-
-# SendGrid (Email Delivery)
-SENDGRID_API_KEY=your_sendgrid_api_key
-SENDGRID_FROM_EMAIL=rewards@missioncommand.app
-SENDGRID_TEMPLATE_ID=your_template_id
 
 # Affiliate Links (Optional - for commission tracking)
 AMAZON_ASSOCIATE_TAG=yourcode-20
@@ -982,12 +973,11 @@ NODE_ENV=development  # or production
 **Costs:**
 - Supabase Pro: $25/mo = $300/year
 - Vercel Pro: $20/mo = $240/year
-- SendGrid: $20/mo = $240/year
 - Stripe fees: $9,600 × 0.029 + ($0.30 × 12 × 800) = $3,168/year
 - Domain & misc: $100/year
-- **Total Annual Costs:** $4,048
+- **Total Annual Costs:** $3,808
 
-**Net Annual Profit:** $120,752 (97% margin!)
+**Net Annual Profit:** $120,992 (97% margin!)
 
 ---
 
@@ -1009,13 +999,12 @@ NODE_ENV=development  # or production
 **Costs:**
 - Supabase Pro: $300/year
 - Vercel Pro: $240/year
-- SendGrid (20K emails/mo): $240/year
 - Stripe fees: ~$15,840/year
 - Customer support (part-time VA): $12,000/year
 - Misc: $500/year
-- **Total Annual Costs:** $29,120
+- **Total Annual Costs:** $28,880
 
-**Net Annual Profit:** $585,280 (95% margin!)
+**Net Annual Profit:** $585,520 (95% margin!)
 
 ---
 
@@ -1036,14 +1025,13 @@ NODE_ENV=development  # or production
 **Costs:**
 - Supabase Pro: $300/year
 - Vercel: $240/year
-- SendGrid (50K emails/mo): $500/year
 - Stripe fees: ~$31,680/year
 - Customer support (2 FT): $80,000/year
 - Marketing: $50,000/year
 - Misc: $2,000/year
-- **Total Annual Costs:** $164,720
+- **Total Annual Costs:** $164,220
 
-**Net Annual Profit:** $1,064,080 (87% margin even at scale!)
+**Net Annual Profit:** $1,064,580 (87% margin even at scale!)
 
 ---
 
@@ -1114,8 +1102,9 @@ Then iterate with these prompts:
 - "Build kid's reward vault browser showing available cards to unlock"
 - "Create redemption request flow where kid selects card and parent gets notified"
 - "Implement parent approval workflow"
-- "Build code reveal screen that shows gift code after approval"
-- "Create themed military email template for reward delivery using SendGrid"
+- "Build code reveal screen with military-themed success animation"
+- "Add copy-to-clipboard button and direct redemption links"
+- "Create redemption history with reveal/hide code functionality"
 - "Add family custom rewards system (parent-created, no gift cards)"
 
 **Phase 4: Polish & Launch (Week 4)**

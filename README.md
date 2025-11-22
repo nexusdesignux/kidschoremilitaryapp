@@ -101,11 +101,13 @@ Military-themed chores app where kids earn points doing tasks. Parents pre-load 
 
 **Backend:**
 - Supabase (database, auth, storage, real-time)
-- SendGrid (email delivery)
-- Stripe (payments)
+- Stripe (subscriptions)
 - QR code generation (qrcode npm package)
+- Browser Push API (notifications)
 
-**Total monthly cost at scale:** ~$65/month
+**Total monthly cost at scale:** ~$45/month
+
+**No email service needed!** Stripe handles subscription receipts automatically.
 
 ---
 
