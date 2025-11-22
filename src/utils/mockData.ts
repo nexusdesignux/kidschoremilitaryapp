@@ -383,6 +383,66 @@ export const DEMO_GIFT_CARDS = [
   },
 ]
 
+// Parent-loaded gift card vault
+export const DEMO_VAULT_CARDS = [
+  {
+    id: 'vault-1',
+    family_id: 'family-1',
+    brand_name: 'Roblox',
+    denomination: 25,
+    gift_code: 'RBXK-7392-MXPL-4829',
+    points_cost: 200,
+    photo_url: null,
+    added_by: 'commander-1',
+    status: 'available' as const,
+    redeemed_by: null,
+    redeemed_at: null,
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'vault-2',
+    family_id: 'family-1',
+    brand_name: 'Fortnite',
+    denomination: 10,
+    gift_code: 'FNBR-2847-VCKS-9182',
+    points_cost: 100,
+    photo_url: null,
+    added_by: 'commander-1',
+    status: 'available' as const,
+    redeemed_by: null,
+    redeemed_at: null,
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'vault-3',
+    family_id: 'family-1',
+    brand_name: 'Amazon',
+    denomination: 15,
+    gift_code: 'AMZN-8273-GIFT-4628',
+    points_cost: 150,
+    photo_url: null,
+    added_by: 'commander-1',
+    status: 'available' as const,
+    redeemed_by: null,
+    redeemed_at: null,
+    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 'vault-4',
+    family_id: 'family-1',
+    brand_name: 'Nintendo',
+    denomination: 20,
+    gift_code: 'NTDO-3948-ESHP-7261',
+    points_cost: 175,
+    photo_url: null,
+    added_by: 'commander-1',
+    status: 'redeemed' as const,
+    redeemed_by: 'agent-1',
+    redeemed_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+]
+
 export const DEMO_ACCOUNTS = [
   {
     email: 'commander@demo.com',

@@ -8,6 +8,8 @@ import MissionBriefing from './pages/MissionBriefing'
 import AgentProfile from './pages/AgentProfile'
 import RewardsPage from './pages/RewardsPage'
 import FamilySettings from './pages/FamilySettings'
+import AddGiftCard from './pages/AddGiftCard'
+import MobileUpload from './pages/MobileUpload'
 
 function App() {
   const { user } = useAuthStore()
@@ -15,6 +17,9 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Public route for mobile upload - accessible without auth */}
+        <Route path="/upload/:sessionId" element={<MobileUpload />} />
+
         {!user ? (
           <>
             <Route path="/" element={<Enlistment />} />
@@ -28,6 +33,7 @@ function App() {
             <Route path="/mission/:id" element={<MissionBriefing />} />
             <Route path="/agent/:id" element={<AgentProfile />} />
             <Route path="/rewards" element={<RewardsPage />} />
+            <Route path="/add-gift-card" element={<AddGiftCard />} />
             <Route path="/settings" element={<FamilySettings />} />
           </Route>
         )}
